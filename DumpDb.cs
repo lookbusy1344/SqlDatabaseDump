@@ -19,15 +19,15 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 
 	public void Run()
 	{
-		var theServer = new Server(config.Instance);
-		myDB = theServer.Databases[config.Database];
+		var theServer = new Server(config.InstanceName);
+		myDB = theServer.Databases[config.DatabaseName];
 		theServer.SetDefaultInitFields(true);
 
 		var list = new DbObjectList(cancellationToken);
 
 		switch (scriptType) {
 			case Scriptable.Tables:
-				list.AddDatabase(myDB, config.Database);
+				list.AddDatabase(myDB, config.DatabaseName);
 				list.AddTables(myDB.Tables);
 				break;
 			case Scriptable.Views:
@@ -85,9 +85,9 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 
 		ThreadsafeWrite.Write($"Scripting {wrappedObject.Name}");
 
-		var filename = $"{config.Dir}{wrappedObject.FullName}";
+		var filename = $"{config.OutputDirectory}{wrappedObject.FullName}";
 
-		if (!config.Replace && File.Exists(filename)) {
+		if (!config.ReplaceExistingFiles && File.Exists(filename)) {
 			// signal to any other tasks to cancel, and throw
 			cancellationToken.Cancel();
 			throw new Exception($"File already exists: {filename}");
@@ -109,7 +109,7 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 
 	private void WritePlaceMarker(DbObjectWrapper wrappedObject, string content)
 	{
-		var filename = $"{config.Dir}{wrappedObject.FullName}";
+		var filename = $"{config.OutputDirectory}{wrappedObject.FullName}";
 		File.WriteAllText(filename, $"{content} {DateTime.Now}");
 	}
 

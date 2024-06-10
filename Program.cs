@@ -18,11 +18,11 @@ internal static class Program
 
 		var config = BuildConfig(args);
 
-		Console.WriteLine($"Dumping '{config.Database}' from '{config.Instance}' into '{config.Dir}'");
+		Console.WriteLine($"Dumping '{config.DatabaseName}' from '{config.InstanceName}' into '{config.OutputDirectory}'");
 		if (config.SingleThread) {
 			Console.WriteLine("Single thread processing");
 		}
-		if (config.Replace) {
+		if (config.ReplaceExistingFiles) {
 			Console.WriteLine("Replacing existing files");
 		}
 

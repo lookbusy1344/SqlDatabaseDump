@@ -6,4 +6,4 @@ using System.Threading.Tasks;
 
 namespace SqlDatabaseDump;
 
-internal sealed record class Config(string Instance, string Database, string Dir, int MaxParallel, bool SingleThread, bool Replace);
+internal sealed record class Config(string InstanceName, string DatabaseName, string OutputDirectory, int MaxParallel, bool SingleThread, bool ReplaceExistingFiles);
