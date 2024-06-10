@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace SqlDatabaseDump;
 
-internal sealed class DumpDb(string instanceName, string databaseName, string outputDirectory, bool replaceExisting, Scriptable scriptType, CancellationTokenSource cancellationToken)
+internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationTokenSource cancellationToken)
 {
 	// https://learn.microsoft.com/en-us/dotnet/api/microsoft.sqlserver.management.smo.scriptingoptions.driall?view=sql-smo-160&devlangs=csharp&f1url=%3FappId%3DDev17IDEF1%26l%3DEN-US%26k%3Dk(Microsoft.SqlServer.Management.Smo.ScriptingOptions.DriAll)%3Bk(DevLang-csharp)%26rd%3Dtrue
 
@@ -19,15 +19,15 @@ internal sealed class DumpDb(string instanceName, string databaseName, string ou
 
 	public void Run()
 	{
-		var theServer = new Server(instanceName);
-		myDB = theServer.Databases[databaseName];
+		var theServer = new Server(config.Instance);
+		myDB = theServer.Databases[config.Database];
 		theServer.SetDefaultInitFields(true);
 
 		var list = new DbObjectList(cancellationToken);
 
 		switch (scriptType) {
 			case Scriptable.Tables:
-				list.AddDatabase(myDB, databaseName);
+				list.AddDatabase(myDB, config.Database);
 				list.AddTables(myDB.Tables);
 				break;
 			case Scriptable.Views:
@@ -85,9 +85,9 @@ internal sealed class DumpDb(string instanceName, string databaseName, string ou
 
 		ThreadsafeWrite.Write($"Scripting {wrappedObject.Name}");
 
-		var filename = $"{outputDirectory}{wrappedObject.FullName}";
+		var filename = $"{config.Dir}{wrappedObject.FullName}";
 
-		if (!replaceExisting && File.Exists(filename)) {
+		if (!config.Replace && File.Exists(filename)) {
 			// signal to any other tasks to cancel, and throw
 			cancellationToken.Cancel();
 			throw new Exception($"File already exists: {filename}");
@@ -109,7 +109,7 @@ internal sealed class DumpDb(string instanceName, string databaseName, string ou
 
 	private void WritePlaceMarker(DbObjectWrapper wrappedObject, string content)
 	{
-		var filename = $"{outputDirectory}{wrappedObject.FullName}";
+		var filename = $"{config.Dir}{wrappedObject.FullName}";
 		File.WriteAllText(filename, $"{content} {DateTime.Now}");
 	}
 

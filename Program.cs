@@ -16,56 +16,35 @@ internal static class Program
 		var ver = GitVersion.VersionInfo.Get();
 		Console.WriteLine($"SqlDatabaseDump.exe {ver.GetVersionHash(12)}");
 
-		var pico = new PicoArgs(args);
+		var config = BuildConfig(args);
 
-		if (pico.Contains("-h", "--help", "-?")) {
-			Console.WriteLine(CommandLineMessage);
-			Environment.Exit(0);
-		}
-
-		var instance = pico.GetParamOpt("-i", "--instance") ?? Environment.GetEnvironmentVariable("DB_INSTANCE");
-		var database = pico.GetParamOpt("-d", "--database") ?? Environment.GetEnvironmentVariable("DB_DATABASE");
-		var dir = pico.GetParamOpt("-o", "--dir") ?? Environment.GetEnvironmentVariable("DB_DIR");
-		var maxparallel = ParseOrDefault(pico.GetParamOpt("-p", "--parallel"), DefaultMaxParallel);
-		var singlethread = pico.Contains("-s", "--singlethread");
-		var replace = pico.Contains("-r", "--replace");
-
-		pico.Finished();
-
-		if (string.IsNullOrWhiteSpace(instance) || string.IsNullOrWhiteSpace(database) || string.IsNullOrWhiteSpace(dir) || maxparallel < 1 || maxparallel > 16) {
-			Console.WriteLine(CommandLineMessage);
-			Environment.Exit(1);
-		}
-
-		Console.WriteLine($"Dumping '{database}' from '{instance}' into '{dir}'");
-		if (singlethread) {
+		Console.WriteLine($"Dumping '{config.Database}' from '{config.Instance}' into '{config.Dir}'");
+		if (config.SingleThread) {
 			Console.WriteLine("Single thread processing");
 		}
-		if (replace) {
+		if (config.Replace) {
 			Console.WriteLine("Replacing existing files");
 		}
-
-		dir = DumpDb.EnsurePathExists(dir);
 
 		var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
 		using var cancellationToken = new CancellationTokenSource();
 		var types = Enum.GetValues(typeof(Scriptable)).Cast<Scriptable>().ToArray();
 
-		if (singlethread) {
+		if (config.SingleThread) {
 			// run in sequence
 			foreach (var type in types) {
 				Console.WriteLine($"Starting {type}...");
-				var dumper = new DumpDb(instance, database, dir, replace, type, cancellationToken);
+				var dumper = new DumpDb(config, type, cancellationToken);
 				dumper.Run();
 			}
 		} else {
 			// run in parallel
 			try {
-				_ = Parallel.ForEach(types, new ParallelOptions { CancellationToken = cancellationToken.Token, MaxDegreeOfParallelism = maxparallel }, type => {
+				_ = Parallel.ForEach(types, new ParallelOptions { CancellationToken = cancellationToken.Token, MaxDegreeOfParallelism = config.MaxParallel }, type => {
 					ThreadsafeWrite.Write($"Starting {type}...");
 
-					var dumper = new DumpDb(instance, database, dir, replace, type, cancellationToken);
+					var dumper = new DumpDb(config, type, cancellationToken);
 					dumper.Run();
 
 					ThreadsafeWrite.Write($"Finished {type}.");
@@ -109,6 +88,37 @@ internal static class Program
 		Console.WriteLine();
 		Console.WriteLine(CommandLineMessage);
 		Environment.Exit(1);
+	}
+
+	private static Config BuildConfig(string[] args)
+	{
+		var pico = new PicoArgs(args);
+
+		// handle help
+		if (pico.Contains("-h", "--help", "-?")) {
+			Console.WriteLine(CommandLineMessage);
+			Environment.Exit(0);
+		}
+
+		// parse command line parameters
+		var instance = pico.GetParamOpt("-i", "--instance") ?? Environment.GetEnvironmentVariable("DB_INSTANCE");
+		var database = pico.GetParamOpt("-d", "--database") ?? Environment.GetEnvironmentVariable("DB_DATABASE");
+		var dir = pico.GetParamOpt("-o", "--dir") ?? Environment.GetEnvironmentVariable("DB_DIR");
+		var maxparallel = ParseOrDefault(pico.GetParamOpt("-p", "--parallel"), DefaultMaxParallel);
+		var singlethread = pico.Contains("-s", "--singlethread");
+		var replace = pico.Contains("-r", "--replace");
+
+		pico.Finished();
+
+		// ensure required parameters are present
+		if (string.IsNullOrWhiteSpace(instance) || string.IsNullOrWhiteSpace(database) || string.IsNullOrWhiteSpace(dir) || maxparallel < 1 || maxparallel > 16) {
+			Console.WriteLine(CommandLineMessage);
+			Environment.Exit(1);
+		}
+
+		dir = DumpDb.EnsurePathExists(dir);
+
+		return new Config(instance, database, dir, maxparallel, singlethread, replace);
 	}
 
 	private static int ParseOrDefault(string? value, int defaultValue) => int.TryParse(value, out var result) ? result : defaultValue;
