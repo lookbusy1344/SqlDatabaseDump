@@ -1,0 +1,16 @@
+{
+  "profiles": {
+    "SqlDatabaseDump": {
+      "commandName": "Project",
+      "commandLineArgs": "--instance (localdb)\\MSSQLLocalDB --database DogTest --dir c:\\dev\\1"
+    },
+    "Run help": {
+      "commandName": "Project",
+      "commandLineArgs": "--help"
+    },
+    "Single thread": {
+      "commandName": "Project",
+      "commandLineArgs": "--instance (localdb)\\MSSQLLocalDB --database DogTest --dir c:\\dev\\1 --singlethread --replace"
+    }
+  }
+}
