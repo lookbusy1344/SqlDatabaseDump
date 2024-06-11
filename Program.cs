@@ -33,11 +33,7 @@ internal static class Program
 
 		if (config.SingleThread) {
 			// run in sequence
-			foreach (var type in types) {
-				Console.WriteLine($"Starting {type}...");
-				var dumper = new DumpDb(config, type, cancellationToken);
-				dumper.Run();
-			}
+			SequentialProcess(types, config, cancellationToken);
 		} else {
 			// run in parallel
 			ParallelProcess(types, config, cancellationToken);
@@ -46,6 +42,15 @@ internal static class Program
 		stopwatch.Stop();
 		var seconds = Convert.ToDouble(stopwatch.ElapsedMilliseconds) / 1000.0;
 		Console.WriteLine($"Execution Time: {seconds:f1} secs");
+	}
+
+	private static void SequentialProcess(Scriptable[] types, Config config, CancellationTokenSource cancellationToken)
+	{
+		foreach (var type in types) {
+			Console.WriteLine($"Starting {type}...");
+			var dumper = new DumpDb(config, type, cancellationToken);
+			dumper.Run();
+		}
 	}
 
 	private static void ParallelProcess(Scriptable[] types, Config config, CancellationTokenSource cancellationToken)
