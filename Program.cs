@@ -40,37 +40,42 @@ internal static class Program
 			}
 		} else {
 			// run in parallel
-			try {
-				_ = Parallel.ForEach(types, new ParallelOptions { CancellationToken = cancellationToken.Token, MaxDegreeOfParallelism = config.MaxParallel }, type => {
-					ThreadsafeWrite.Write($"Starting {type}...");
-
-					var dumper = new DumpDb(config, type, cancellationToken);
-					dumper.Run();
-
-					ThreadsafeWrite.Write($"Finished {type}.");
-				});
-			}
-			catch (AggregateException ae) {
-				// handle exceptions from Parallel.ForEach, but ignore OperationCanceledException, they are just a side-effect
-				foreach (var e in ae.InnerExceptions) {
-					if (e != ae.InnerException && e is not OperationCanceledException) {
-						// display significant inner exceptions
-						Console.WriteLine($"INNER ERROR: {e.Message}");
-					}
-				}
-
-				// rethrow either the first inner exception (true error) or the AggregateException as a fallback
-				if (ae.InnerException != null) {
-					throw ae.InnerException;
-				} else {
-					throw;
-				}
-			}
+			ParallelProcess(types, config, cancellationToken);
 		}
 
 		stopwatch.Stop();
 		var seconds = Convert.ToDouble(stopwatch.ElapsedMilliseconds) / 1000.0;
 		Console.WriteLine($"Execution Time: {seconds:f1} secs");
+	}
+
+	private static void ParallelProcess(Scriptable[] types, Config config, CancellationTokenSource cancellationToken)
+	{
+		try {
+			_ = Parallel.ForEach(types, new ParallelOptions { CancellationToken = cancellationToken.Token, MaxDegreeOfParallelism = config.MaxParallel }, type => {
+				ThreadsafeWrite.Write($"Starting {type}...");
+
+				var dumper = new DumpDb(config, type, cancellationToken);
+				dumper.Run();
+
+				ThreadsafeWrite.Write($"Finished {type}.");
+			});
+		}
+		catch (AggregateException ae) {
+			// handle exceptions from Parallel.ForEach, but ignore OperationCanceledException, they are just a side-effect
+			foreach (var e in ae.InnerExceptions) {
+				if (e != ae.InnerException && e is not OperationCanceledException) {
+					// display significant inner exceptions
+					Console.WriteLine($"INNER ERROR: {e.Message}");
+				}
+			}
+
+			// rethrow either the first inner exception (true error) or the AggregateException as a fallback
+			if (ae.InnerException != null) {
+				throw ae.InnerException;
+			} else {
+				throw;
+			}
+		}
 	}
 
 	/// <summary>
