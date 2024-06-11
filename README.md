@@ -1,10 +1,28 @@
 # SqlDatabaseDump
 
-Command line utility to dump SQL Server database structure to files. Built with .NET 8.
+Command line utility to dump SQL Server database structure to files. Built with .NET 8. Multi-threading by default.
+
+## Building
+
+Publish the app in release mode with dependencies included:
 
 ```
-Usage: SqlDatabaseDump.exe --instance <instance> --database <db> --dir <dir>
+Publish.cmd
+```
 
+## Usage
+
+```
+C:\> SqlDatabaseDump.exe --instance <instance> --database <db> --dir <dir>
+
+..eg..
+
+C:\> SqlDatabaseDump.exe --instance (local) --database MyDB --dir c:\MyDB
+```
+
+Options:
+
+```
 Required:
   -i, --instance <instance>  SQL Server instance to connect to  (or DB_INSTANCE environment variable)
   -d, --database <db>        Database to process                (or DB_DATABASE environment variable)
