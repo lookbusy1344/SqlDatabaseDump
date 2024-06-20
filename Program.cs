@@ -31,7 +31,7 @@ internal static class Program
 		using var cancellationToken = new CancellationTokenSource();
 		var types = Enum.GetValues(typeof(Scriptable)).Cast<Scriptable>().ToArray();
 
-		if (config.SingleThread) {
+		if (config.SingleThread || config.MaxParallel == 1) {
 			// run in sequence
 			SequentialProcess(types, config, cancellationToken);
 		} else {
