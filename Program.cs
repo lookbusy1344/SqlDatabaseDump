@@ -42,7 +42,7 @@ internal static class Program
 		stopwatch.Stop();
 		var seconds = Convert.ToDouble(stopwatch.ElapsedMilliseconds) / 1000.0;
 
-		Console.WriteLine($"Final counter: {DumpDb.Counter}, files written: {DumpDb.WrittenCounter}");
+		Console.WriteLine($"Items found: {DumpDb.MaxCounter}, files written: {DumpDb.WrittenCounter}, remaining: {DumpDb.Counter}");
 		Console.WriteLine($"Execution Time: {seconds:f1} secs");
 	}
 

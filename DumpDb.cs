@@ -15,6 +15,7 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 	// https://learn.microsoft.com/en-us/dotnet/api/microsoft.sqlserver.management.smo.scriptingoptions.driall?view=sql-smo-160&devlangs=csharp&f1url=%3FappId%3DDev17IDEF1%26l%3DEN-US%26k%3Dk(Microsoft.SqlServer.Management.Smo.ScriptingOptions.DriAll)%3Bk(DevLang-csharp)%26rd%3Dtrue
 
 	private static readonly SafeCounter counter = new();    // static so its shared across all instances. Counter is thread safe
+	private static readonly SafeCounter maxcounter = new();
 	private static readonly SafeCounter writtencounter = new();
 
 	private readonly ScriptingOptions op = new() { DriAll = true };
@@ -24,6 +25,11 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 	/// Get the current value of the shared counter
 	/// </summary>
 	public static int Counter => counter.Value;
+
+	/// <summary>
+	/// Maximum items enumerated
+	/// </summary>
+	public static int MaxCounter => maxcounter.Value;
 
 	/// <summary>
 	/// Number of items written to disk
@@ -36,7 +42,7 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 		myDB = theServer.Databases[config.DatabaseName];
 		theServer.SetDefaultInitFields(true);
 
-		var list = new DbObjectList(counter, cancellationToken);
+		var list = new DbObjectList(counter, maxcounter, cancellationToken);
 
 		switch (scriptType) {
 			case Scriptable.Tables:
@@ -80,7 +86,7 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 				throw new InvalidOperationException($"Invalid type: {scriptType}");
 		}
 
-		ThreadsafeWrite.Write($"-- Queue contains {counter.Value} item(s) to be scripted --");
+		ThreadsafeWrite.Write($"-- Queue contains {counter.Value} item(s) out of {maxcounter.Value} --");
 
 		foreach (var o in list.Items) {
 			try {
@@ -98,7 +104,7 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 	{
 		cancellationToken.Token.ThrowIfCancellationRequested();
 
-		ThreadsafeWrite.Write($"Scripting {wrappedObject.Name} ({counter.Value} items remaining)");
+		ThreadsafeWrite.Write($"Scripting {wrappedObject.Name} ({counter.Value} / {maxcounter.Value} remaining)");
 
 		var filename = $"{config.OutputDirectory}{wrappedObject.FullName}";
 
