@@ -67,7 +67,7 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 				throw new InvalidOperationException($"Invalid type: {scriptType}");
 		}
 
-		ThreadsafeWrite.Write($"-- Queue contains {Singletons.QueueCounter.Value} item(s) out of {Singletons.MaxCounter.Value} --");
+		ThreadsafeWrite.Write($"-- Queue contains {Shared.QueueCounter.Value} item(s) out of {Shared.MaxCounter.Value} --");
 
 		foreach (var o in list.Items) {
 			try {
@@ -85,7 +85,7 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 	{
 		cancellationToken.Token.ThrowIfCancellationRequested();
 
-		ThreadsafeWrite.Write($"Scripting {wrappedObject.Name} ({Singletons.QueueCounter.Value} of {Singletons.MaxCounter.Value} remaining)");
+		ThreadsafeWrite.Write($"Scripting {wrappedObject.Name} ({Shared.QueueCounter.Value} of {Shared.MaxCounter.Value} remaining)");
 
 		var filename = $"{config.OutputDirectory}{wrappedObject.FullName}";
 
@@ -111,11 +111,11 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 			}
 
 			wr.Close();
-			_ = Singletons.WrittenCounter.Increment();  // file has been written
+			_ = Shared.WrittenCounter.Increment();  // file has been written
 		}
 		finally {
 			// one less in queue
-			_ = Singletons.QueueCounter.Decrement();
+			_ = Shared.QueueCounter.Decrement();
 		}
 	}
 

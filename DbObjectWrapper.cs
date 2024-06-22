@@ -99,8 +99,8 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 
 	private static void UpdateCounters()
 	{
-		_ = Singletons.QueueCounter.Increment();    // current items in queue, this goes up and down
-		_ = Singletons.MaxCounter.Increment();     // max items in queue, this only goes up
+		_ = Shared.QueueCounter.Increment();    // current items in queue, this goes up and down
+		_ = Shared.MaxCounter.Increment();     // max items in queue, this only goes up
 	}
 
 	public void AddDatabase(Database db, string databaseName)
