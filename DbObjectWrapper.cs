@@ -86,12 +86,9 @@ internal readonly struct DbObjectWrapper
 /// A polymorphic list of database objects
 /// </summary>
 [System.Diagnostics.DebuggerDisplay("{Items}")]
-internal sealed class DbObjectList(SafeCounter counter, SafeCounter max, CancellationTokenSource cancellationToken)
+internal sealed class DbObjectList(SafeCounter queueCounter, SafeCounter maxCounter, CancellationTokenSource cancellationToken)
 {
 	private readonly List<DbObjectWrapper> items = [];
-
-	private readonly SafeCounter safeCounter = counter;
-	private readonly SafeCounter maxCounter = max;
 
 	public IReadOnlyList<DbObjectWrapper> Items => items;
 
@@ -102,7 +99,7 @@ internal sealed class DbObjectList(SafeCounter counter, SafeCounter max, Cancell
 
 	private void UpdateCounters()
 	{
-		_ = safeCounter.Increment();    // current items in queue, this goes up and down
+		_ = queueCounter.Increment();    // current items in queue, this goes up and down
 		_ = maxCounter.Increment();     // max items in queue, this only goes up
 	}
 
