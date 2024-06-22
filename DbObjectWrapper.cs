@@ -102,12 +102,8 @@ internal sealed class DbObjectList(SafeCounter counter, SafeCounter max, Cancell
 
 	private void UpdateCounters()
 	{
-		_ = safeCounter.Increment();
-		var i = safeCounter.Value;
-
-		if (i > maxCounter.Value) {
-			_ = maxCounter.Reset(i);
-		}
+		_ = safeCounter.Increment();    // current items in queue, this goes up and down
+		_ = maxCounter.Increment();     // max items in queue, this only goes up
 	}
 
 	public void AddDatabase(Database db, string databaseName)

@@ -104,7 +104,7 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 	{
 		cancellationToken.Token.ThrowIfCancellationRequested();
 
-		ThreadsafeWrite.Write($"Scripting {wrappedObject.Name} ({counter.Value} / {maxcounter.Value} remaining)");
+		ThreadsafeWrite.Write($"Scripting {wrappedObject.Name} ({counter.Value} of {maxcounter.Value} remaining)");
 
 		var filename = $"{config.OutputDirectory}{wrappedObject.FullName}";
 
@@ -116,8 +116,11 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 			}
 
 			var sc = wrappedObject.Scriptable.Script(op); // this will throw if access is denied
+
+			_ = writtencounter.Increment();
+
 			if (sc.Count == 0) {
-				return;
+				return; // nothing to write
 			}
 
 			using var wr = new StreamWriter(filename);
@@ -127,11 +130,9 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 				wr.WriteLine("GO");
 				wr.WriteLine();
 			}
-
-			_ = writtencounter.Increment();
 		}
 		finally {
-			// decrement the shared thread safe counter
+			// one less in queue
 			_ = counter.Decrement();
 		}
 	}
