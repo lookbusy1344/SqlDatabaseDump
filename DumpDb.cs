@@ -19,6 +19,11 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 	private readonly ScriptingOptions op = new() { DriAll = true };
 	private Database? myDB;
 
+	/// <summary>
+	/// Get the current value of the shared counter
+	/// </summary>
+	public static int Counter => counter.Value;
+
 	public void Run()
 	{
 		var theServer = new Server(config.InstanceName);
@@ -69,7 +74,7 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 				throw new InvalidOperationException($"Invalid type: {scriptType}");
 		}
 
-		ThreadsafeWrite.Write($"Now queued {counter.Value} item(s) to be scripted.");
+		ThreadsafeWrite.Write($"-- Queue contains {counter.Value} item(s) to be scripted --");
 
 		foreach (var o in list.Items) {
 			try {
@@ -91,26 +96,29 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 
 		var filename = $"{config.OutputDirectory}{wrappedObject.FullName}";
 
-		if (!config.ReplaceExistingFiles && File.Exists(filename)) {
-			// signal to any other tasks to cancel, and throw
-			cancellationToken.Cancel();
-			throw new Exception($"File already exists: {filename}");
+		try {
+			if (!config.ReplaceExistingFiles && File.Exists(filename)) {
+				// signal to any other tasks to cancel, and throw
+				cancellationToken.Cancel();
+				throw new Exception($"File already exists: {filename}");
+			}
+
+			var sc = wrappedObject.Scriptable.Script(op); // this will throw if access is denied
+			if (sc.Count == 0) {
+				return;
+			}
+
+			using var wr = new StreamWriter(filename);
+
+			foreach (var s in sc) {
+				wr.WriteLine(s);
+				wr.WriteLine("GO");
+				wr.WriteLine();
+			}
 		}
-
-		// decrement the shared thread safe counter
-		_ = counter.Decrement();
-
-		var sc = wrappedObject.Scriptable.Script(op); // this will throw if access is denied
-		if (sc.Count == 0) {
-			return;
-		}
-
-		using var wr = new StreamWriter(filename);
-
-		foreach (var s in sc) {
-			wr.WriteLine(s);
-			wr.WriteLine("GO");
-			wr.WriteLine();
+		finally {
+			// decrement the shared thread safe counter
+			_ = counter.Decrement();
 		}
 	}
 
