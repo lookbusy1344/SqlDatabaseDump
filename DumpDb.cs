@@ -117,8 +117,6 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 
 			var sc = wrappedObject.Scriptable.Script(op); // this will throw if access is denied
 
-			_ = writtencounter.Increment();
-
 			if (sc.Count == 0) {
 				return; // nothing to write
 			}
@@ -130,6 +128,9 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 				wr.WriteLine("GO");
 				wr.WriteLine();
 			}
+
+			wr.Close();
+			_ = writtencounter.Increment();
 		}
 		finally {
 			// one less in queue
