@@ -86,7 +86,7 @@ internal readonly struct DbObjectWrapper
 /// A polymorphic list of database objects
 /// </summary>
 [System.Diagnostics.DebuggerDisplay("{Items}")]
-internal sealed class DbObjectList(SafeCounter queueCounter, SafeCounter maxCounter, CancellationTokenSource cancellationToken)
+internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 {
 	private readonly List<DbObjectWrapper> items = [];
 
@@ -97,10 +97,10 @@ internal sealed class DbObjectList(SafeCounter queueCounter, SafeCounter maxCoun
 	/// </summary>
 	private void Add(IScriptable script, string? schema, string name, string extension) => items.Add(new DbObjectWrapper(script, schema, name, extension));
 
-	private void UpdateCounters()
+	private static void UpdateCounters()
 	{
-		_ = queueCounter.Increment();    // current items in queue, this goes up and down
-		_ = maxCounter.Increment();     // max items in queue, this only goes up
+		_ = Singletons.QueueCounter.Increment();    // current items in queue, this goes up and down
+		_ = Singletons.MaxCounter.Increment();     // max items in queue, this only goes up
 	}
 
 	public void AddDatabase(Database db, string databaseName)
