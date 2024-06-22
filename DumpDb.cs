@@ -15,6 +15,7 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 	// https://learn.microsoft.com/en-us/dotnet/api/microsoft.sqlserver.management.smo.scriptingoptions.driall?view=sql-smo-160&devlangs=csharp&f1url=%3FappId%3DDev17IDEF1%26l%3DEN-US%26k%3Dk(Microsoft.SqlServer.Management.Smo.ScriptingOptions.DriAll)%3Bk(DevLang-csharp)%26rd%3Dtrue
 
 	private static readonly SafeCounter counter = new();    // static so its shared across all instances. Counter is thread safe
+	private static readonly SafeCounter writtencounter = new();
 
 	private readonly ScriptingOptions op = new() { DriAll = true };
 	private Database? myDB;
@@ -23,6 +24,11 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 	/// Get the current value of the shared counter
 	/// </summary>
 	public static int Counter => counter.Value;
+
+	/// <summary>
+	/// Number of items written to disk
+	/// </summary>
+	public static int WrittenCounter => writtencounter.Value;
 
 	public void Run()
 	{
@@ -115,6 +121,8 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 				wr.WriteLine("GO");
 				wr.WriteLine();
 			}
+
+			_ = writtencounter.Increment();
 		}
 		finally {
 			// decrement the shared thread safe counter
