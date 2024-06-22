@@ -86,9 +86,11 @@ internal readonly struct DbObjectWrapper
 /// A polymorphic list of database objects
 /// </summary>
 [System.Diagnostics.DebuggerDisplay("{Items}")]
-internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
+internal sealed class DbObjectList(SafeCounter counter, CancellationTokenSource cancellationToken)
 {
 	private readonly List<DbObjectWrapper> items = [];
+
+	private readonly SafeCounter safeCounter = counter;
 
 	public IReadOnlyList<DbObjectWrapper> Items => items;
 
@@ -97,7 +99,11 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 	/// </summary>
 	private void Add(IScriptable script, string? schema, string name, string extension) => items.Add(new DbObjectWrapper(script, schema, name, extension));
 
-	public void AddDatabase(Database db, string databaseName) => items.Add(new DbObjectWrapper(db, databaseName));
+	public void AddDatabase(Database db, string databaseName)
+	{
+		_ = safeCounter.Increment();
+		items.Add(new DbObjectWrapper(db, databaseName));
+	}
 
 	public void AddTables(TableCollection tableCollection)
 	{
@@ -105,6 +111,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 			cancellationToken.Token.ThrowIfCancellationRequested();
 
 			if (!t.IsSystemObject) {
+				_ = safeCounter.Increment();
 				ThreadsafeWrite.Write($"Enumerating table {t.Name}");
 				Add(t, t.Schema, t.Name, "TAB");
 			}
@@ -117,6 +124,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 			cancellationToken.Token.ThrowIfCancellationRequested();
 
 			if (!v.IsSystemObject) {
+				_ = safeCounter.Increment();
 				ThreadsafeWrite.Write($"Enumerating view {v.Name}");
 				Add(v, v.Schema, v.Name, "VIW");
 			}
@@ -129,6 +137,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 			cancellationToken.Token.ThrowIfCancellationRequested();
 
 			if (!p.IsSystemObject) {
+				_ = safeCounter.Increment();
 				ThreadsafeWrite.Write($"Enumerating sproc {p.Name}");
 				Add(p, p.Schema, p.Name, "PRC");
 			}
@@ -141,6 +150,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 			cancellationToken.Token.ThrowIfCancellationRequested();
 
 			if (!u.IsSystemObject) {
+				_ = safeCounter.Increment();
 				ThreadsafeWrite.Write($"Enumerating UDF {u.Name}");
 				Add(u, u.Schema, u.Name, "UDF");
 			}
@@ -153,6 +163,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 			cancellationToken.Token.ThrowIfCancellationRequested();
 
 			if (!r.IsFixedRole) {
+				_ = safeCounter.Increment();
 				ThreadsafeWrite.Write($"Enumerating role {r.Name}");
 				Add(r, null, r.Name, "ROLE");
 			}
@@ -164,6 +175,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 		foreach (Rule r in rules) {
 			cancellationToken.Token.ThrowIfCancellationRequested();
 
+			_ = safeCounter.Increment();
 			ThreadsafeWrite.Write($"Enumerating rule {r.Name}");
 			Add(r, r.Schema, r.Name, "RULE");
 		}
@@ -175,6 +187,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 			cancellationToken.Token.ThrowIfCancellationRequested();
 
 			if (!t.IsSystemObject) {
+				_ = safeCounter.Increment();
 				ThreadsafeWrite.Write($"Enumerating trigger {t.Name}");
 				Add(t, null, t.Name, "TRIG");
 			}
@@ -187,6 +200,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 			cancellationToken.Token.ThrowIfCancellationRequested();
 
 			if (!s.IsSystemObject) {
+				_ = safeCounter.Increment();
 				ThreadsafeWrite.Write($"Enumerating schema {s.Name}");
 				Add(s, null, s.Name, "SCH");
 			}
@@ -199,6 +213,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 		foreach (UserDefinedDataType t in types) {
 			cancellationToken.Token.ThrowIfCancellationRequested();
 
+			_ = safeCounter.Increment();
 			ThreadsafeWrite.Write($"Enumerating uddt {t.Name}");
 			Add(t, t.Schema, t.Name, "UDDT");
 		}
@@ -210,6 +225,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 		foreach (UserDefinedType t in types) {
 			cancellationToken.Token.ThrowIfCancellationRequested();
 
+			_ = safeCounter.Increment();
 			ThreadsafeWrite.Write($"Enumerating udt {t.Name}");
 			Add(t, t.Schema, t.Name, "TYPE");
 		}
@@ -220,6 +236,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 		foreach (Sequence s in sequences) {
 			cancellationToken.Token.ThrowIfCancellationRequested();
 
+			_ = safeCounter.Increment();
 			ThreadsafeWrite.Write($"Enumerating sequence {s.Name}");
 			Add(s, s.Schema, s.Name, "SEQ");
 		}
@@ -230,6 +247,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 		foreach (Synonym s in syns) {
 			cancellationToken.Token.ThrowIfCancellationRequested();
 
+			_ = safeCounter.Increment();
 			ThreadsafeWrite.Write($"Enumerating synonym {s.Name}");
 			Add(s, s.Schema, s.Name, "SYNO");
 		}

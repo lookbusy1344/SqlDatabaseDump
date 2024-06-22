@@ -14,6 +14,8 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 {
 	// https://learn.microsoft.com/en-us/dotnet/api/microsoft.sqlserver.management.smo.scriptingoptions.driall?view=sql-smo-160&devlangs=csharp&f1url=%3FappId%3DDev17IDEF1%26l%3DEN-US%26k%3Dk(Microsoft.SqlServer.Management.Smo.ScriptingOptions.DriAll)%3Bk(DevLang-csharp)%26rd%3Dtrue
 
+	private static readonly SafeCounter counter = new();    // static so its shared across all instances. Counter is thread safe
+
 	private readonly ScriptingOptions op = new() { DriAll = true };
 	private Database? myDB;
 
@@ -23,7 +25,7 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 		myDB = theServer.Databases[config.DatabaseName];
 		theServer.SetDefaultInitFields(true);
 
-		var list = new DbObjectList(cancellationToken);
+		var list = new DbObjectList(counter, cancellationToken);
 
 		switch (scriptType) {
 			case Scriptable.Tables:
@@ -67,6 +69,8 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 				throw new InvalidOperationException($"Invalid type: {scriptType}");
 		}
 
+		ThreadsafeWrite.Write($"Now queued {counter.Value} item(s) to be scripted.");
+
 		foreach (var o in list.Items) {
 			try {
 				WriteObject(o);
@@ -83,7 +87,7 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 	{
 		cancellationToken.Token.ThrowIfCancellationRequested();
 
-		ThreadsafeWrite.Write($"Scripting {wrappedObject.Name}");
+		ThreadsafeWrite.Write($"Scripting {wrappedObject.Name} ({counter.Value} items remaining)");
 
 		var filename = $"{config.OutputDirectory}{wrappedObject.FullName}";
 
@@ -92,6 +96,9 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 			cancellationToken.Cancel();
 			throw new Exception($"File already exists: {filename}");
 		}
+
+		// decrement the shared thread safe counter
+		_ = counter.Decrement();
 
 		var sc = wrappedObject.Scriptable.Script(op); // this will throw if access is denied
 		if (sc.Count == 0) {
