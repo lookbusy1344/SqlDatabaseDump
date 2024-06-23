@@ -74,8 +74,10 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 				WriteObject(o);
 			}
 			catch (FailedOperationException ex) {
-				// eg if the object is encrypted, continue with the other objects
-				ThreadsafeWrite.Write($"Failed to script {o.Name}: {ex.Message}");
+				// eg if the object is encrypted, log and continue with the other objects
+				ThreadsafeWrite.Write($"Failed to script {o.FullName}: {ex.Message}");
+
+				Shared.ErrorObjects.Add(o.FullName);
 				WritePlaceMarker(o, "-- Failed to script object");
 			}
 		}

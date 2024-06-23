@@ -75,7 +75,7 @@ internal readonly struct DbObjectWrapper
 	public DbObjectWrapper(Database db, string databaseName)
 	{
 		Scriptable = db;
-		OverrideFilename = $"{databaseName}-settings.TXT";
+		OverrideFilename = $"{databaseName}-Settings.TXT";
 		Schema = null;
 		Name = "database settings";
 		Ext = string.Empty;

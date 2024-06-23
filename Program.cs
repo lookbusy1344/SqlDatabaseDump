@@ -1,5 +1,6 @@
 ﻿using PicoArgs_dotnet;
 using System;
+using System.Reflection.Metadata;
 
 namespace SqlDatabaseDump;
 
@@ -39,10 +40,12 @@ internal static class Program
 			ParallelProcess(types, config, cancellationToken);
 		}
 
+		WriteAnyErrors(config);
+
 		stopwatch.Stop();
 		var seconds = Convert.ToDouble(stopwatch.ElapsedMilliseconds) / 1000.0;
 
-		Console.WriteLine($"Items found: {Shared.MaxCounter.Value}, files written: {Shared.WrittenCounter.Value}, remaining: {Shared.QueueCounter.Value}");
+		Console.WriteLine($"Items found: {Shared.MaxCounter.Value}, files written: {Shared.WrittenCounter.Value}, errors: {Shared.ErrorObjects.Count}, remaining: {Shared.QueueCounter.Value}");
 		Console.WriteLine($"Execution Time: {seconds:f1} secs");
 	}
 
@@ -131,6 +134,28 @@ internal static class Program
 		dir = DumpDb.EnsurePathExists(dir);
 
 		return new Config(instance, database, dir, maxparallel, singlethread, replace);
+	}
+
+	private static void WriteAnyErrors(Config config)
+	{
+		if (Shared.ErrorObjects.IsEmpty) {
+			return;
+		}
+
+		// sort the concurrent bag
+		IReadOnlyList<string> items = [.. Shared.ErrorObjects.AsEnumerable().Order()];
+
+		var filename = $"{config.OutputDirectory}{config.DatabaseName}-Errors.TXT";
+		using var wr = new StreamWriter(filename);
+
+		wr.WriteLine($"Objects with errors in {config.DatabaseName} {DateTime.Now}:");
+		wr.WriteLine();
+
+		foreach (var s in items) {
+			wr.WriteLine(s);
+		}
+
+		wr.Close();
 	}
 
 	private static int ParseOrDefault(string? value, int defaultValue) => int.TryParse(value, out var result) ? result : defaultValue;

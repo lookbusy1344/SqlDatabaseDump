@@ -1,4 +1,6 @@
-﻿namespace SqlDatabaseDump;
+﻿using System.Collections.Concurrent;
+
+namespace SqlDatabaseDump;
 
 internal static class Shared
 {
@@ -16,4 +18,9 @@ internal static class Shared
 	/// Number of items written to disk
 	/// </summary>
 	public static SafeCounter WrittenCounter { get; } = new();
+
+	/// <summary>
+	/// Objects that caused errors
+	/// </summary>
+	public static ConcurrentBag<string> ErrorObjects { get; } = [];
 }
