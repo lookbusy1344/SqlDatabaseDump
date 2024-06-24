@@ -98,7 +98,7 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 			if (!config.ReplaceExistingFiles && File.Exists(filename)) {
 				// signal to any other tasks to cancel, and throw
 				cancellationToken.Cancel();
-				throw new Exception($"File already exists: {filename}");
+				throw new FileExistsException($"File already exists: {filename}", filename);
 			}
 
 			var sc = wrappedObject.Scriptable.Script(op); // this will throw if access is denied
