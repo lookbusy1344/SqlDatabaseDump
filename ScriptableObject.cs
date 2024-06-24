@@ -1,4 +1,5 @@
 ﻿using Microsoft.SqlServer.Management.Smo;
+using System.Collections.Specialized;
 
 namespace SqlDatabaseDump;
 
@@ -27,15 +28,17 @@ internal enum Scriptable
 [System.Diagnostics.DebuggerDisplay("{FullName}")]
 internal sealed class ScriptableObject
 {
-	public IScriptable Scriptable { get; }
+	private static readonly ScriptingOptions ScriptOpts = new() { DriAll = true };
 
-	public string? Schema { get; }
+	private IScriptable Scriptable { get; }
+
+	private string? Schema { get; }
+
+	private string Ext { get; }
+
+	private string? OverrideFilename { get; }
 
 	public string Name { get; }
-
-	public string Ext { get; }
-
-	public string? OverrideFilename { get; }
 
 	public string FullName
 	{
@@ -75,4 +78,9 @@ internal sealed class ScriptableObject
 		Name = "database settings";
 		Ext = string.Empty;
 	}
+
+	/// <summary>
+	/// Script the object
+	/// </summary>
+	public StringCollection Script() => Scriptable.Script(ScriptOpts);
 }

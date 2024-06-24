@@ -1,6 +1,5 @@
 ﻿using PicoArgs_dotnet;
 using System;
-using System.Reflection.Metadata;
 
 namespace SqlDatabaseDump;
 

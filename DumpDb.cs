@@ -1,12 +1,4 @@
-﻿using Microsoft.SqlServer.Management.Common;
-using Microsoft.SqlServer.Management.Smo;
-using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Microsoft.SqlServer.Management.Smo;
 
 namespace SqlDatabaseDump;
 
@@ -14,7 +6,6 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 {
 	// https://learn.microsoft.com/en-us/dotnet/api/microsoft.sqlserver.management.smo.scriptingoptions.driall?view=sql-smo-160&devlangs=csharp&f1url=%3FappId%3DDev17IDEF1%26l%3DEN-US%26k%3Dk(Microsoft.SqlServer.Management.Smo.ScriptingOptions.DriAll)%3Bk(DevLang-csharp)%26rd%3Dtrue
 
-	private readonly ScriptingOptions op = new() { DriAll = true };
 	private Database? myDB;
 
 	public void Run()
@@ -101,7 +92,7 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 				throw new FileExistsException($"File already exists: {filename}", filename);
 			}
 
-			var sc = wrappedObject.Scriptable.Script(op); // this will throw if access is denied
+			var sc = wrappedObject.Script(); // this will throw if access is denied
 
 			if (sc.Count == 0) {
 				return; // nothing to write
