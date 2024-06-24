@@ -86,7 +86,7 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 		}
 	}
 
-	private void WriteObject(DbObjectWrapper wrappedObject)
+	private void WriteObject(ScriptableObject wrappedObject)
 	{
 		cancellationToken.Token.ThrowIfCancellationRequested();
 
@@ -124,7 +124,7 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 		}
 	}
 
-	private void WritePlaceMarker(DbObjectWrapper wrappedObject, string content)
+	private void WritePlaceMarker(ScriptableObject wrappedObject, string content)
 	{
 		var filename = $"{config.OutputDirectory}{wrappedObject.FullName}";
 		File.WriteAllText(filename, $"{content} {DateTime.Now}");

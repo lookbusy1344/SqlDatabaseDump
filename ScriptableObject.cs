@@ -30,7 +30,7 @@ internal enum Scriptable
 /// A wrapper class for database objects to allow polymorphic processing
 /// </summary>
 [System.Diagnostics.DebuggerDisplay("{FullName}")]
-internal readonly struct DbObjectWrapper
+internal sealed class ScriptableObject
 {
 	public IScriptable Scriptable { get; }
 
@@ -61,7 +61,7 @@ internal readonly struct DbObjectWrapper
 	/// <summary>
 	/// Constructor for general scriptable objects
 	/// </summary>
-	public DbObjectWrapper(IScriptable script, string? schema, string name, string extension)
+	public ScriptableObject(IScriptable script, string? schema, string name, string extension)
 	{
 		Scriptable = script;
 		Schema = schema;
@@ -72,7 +72,7 @@ internal readonly struct DbObjectWrapper
 	/// <summary>
 	/// Constructor for database settings
 	/// </summary>
-	public DbObjectWrapper(Database db, string databaseName)
+	public ScriptableObject(Database db, string databaseName)
 	{
 		Scriptable = db;
 		OverrideFilename = $"{databaseName}-Settings.TXT";
@@ -88,14 +88,14 @@ internal readonly struct DbObjectWrapper
 [System.Diagnostics.DebuggerDisplay("{Items}")]
 internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 {
-	private readonly List<DbObjectWrapper> items = [];
+	private readonly List<ScriptableObject> items = [];
 
-	public IReadOnlyList<DbObjectWrapper> Items => items;
+	public IReadOnlyList<ScriptableObject> Items => items;
 
 	/// <summary>
 	/// Add a scriptable object to the list
 	/// </summary>
-	private void Add(IScriptable script, string? schema, string name, string extension) => items.Add(new DbObjectWrapper(script, schema, name, extension));
+	private void Add(IScriptable script, string? schema, string name, string extension) => items.Add(new ScriptableObject(script, schema, name, extension));
 
 	private static void UpdateCounters()
 	{
@@ -106,7 +106,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 	public void AddDatabase(Database db, string databaseName)
 	{
 		UpdateCounters();
-		items.Add(new DbObjectWrapper(db, databaseName));
+		items.Add(new ScriptableObject(db, databaseName));
 	}
 
 	public void AddTables(TableCollection tableCollection)
