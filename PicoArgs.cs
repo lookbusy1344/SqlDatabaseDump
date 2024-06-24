@@ -3,7 +3,7 @@ namespace PicoArgs_dotnet;
 /*  PICOARGS_DOTNET - a tiny command line argument parser for .NET
     https://github.com/lookbusy1344/PicoArgs-dotnet
 
-    Version 1.3.1 - 04 May 2024
+    Version 1.4.0 - 24 Jun 2024
 
     Example usage:
 
@@ -270,6 +270,8 @@ public readonly record struct KeyValue(string Key, string? Value)
 	/// </summary>
 	private static string TrimQuote(string str) =>
 		(str.Length > 1 && (str[0] is '\'' or '\"') && str[^1] == str[0]) ? str[1..^1] : str;
+
+	public override string ToString() => Value == null ? Key : $"{Key}={Value}";
 }
 
 /// <summary>
