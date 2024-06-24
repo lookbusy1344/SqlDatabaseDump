@@ -29,7 +29,7 @@ internal static class Program
 		var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
 		using var cancellationToken = new CancellationTokenSource();
-		var types = Enum.GetValues(typeof(Scriptable)).Cast<Scriptable>().ToArray();
+		var types = Enum.GetValues(typeof(Scriptable)).Cast<Scriptable>();
 
 		if (config.SingleThread || config.MaxParallel == 1) {
 			// run in sequence
@@ -50,7 +50,7 @@ internal static class Program
 		Console.WriteLine($"Execution Time: {seconds:f1} secs");
 	}
 
-	private static void SequentialProcess(Scriptable[] types, Config config, CancellationTokenSource cancellationToken)
+	private static void SequentialProcess(IEnumerable<Scriptable> types, Config config, CancellationTokenSource cancellationToken)
 	{
 		foreach (var type in types) {
 			Console.WriteLine($"Starting {type}...");
@@ -59,7 +59,7 @@ internal static class Program
 		}
 	}
 
-	private static void ParallelProcess(Scriptable[] types, Config config, CancellationTokenSource cancellationToken)
+	private static void ParallelProcess(IEnumerable<Scriptable> types, Config config, CancellationTokenSource cancellationToken)
 	{
 		try {
 			_ = Parallel.ForEach(types, new ParallelOptions { CancellationToken = cancellationToken.Token, MaxDegreeOfParallelism = config.MaxParallel }, type => {
