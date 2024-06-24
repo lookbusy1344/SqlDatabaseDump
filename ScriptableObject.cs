@@ -8,14 +8,18 @@ namespace SqlDatabaseDump;
 /// </summary>
 internal enum Scriptable
 {
-	Roles,
+	// order is important here because each spawns a task and can run in parallel
+	// start with the big 4: tables, views, stored procedures, user defined functions
 	Tables,
 	Views,
 	StoredProcedures,
-	Schemas,
-	Sequences,
-	DatabaseTriggers,
 	UserDefinedFunctions,
+	// then smaller items like schemas and roles
+	Schemas,
+	Roles,
+	DatabaseTriggers,
+	// then the last bits, frequently empty
+	Sequences,
 	UserDefinedDataTypes,
 	UserDefinedTypes,
 	Rules,
