@@ -111,13 +111,22 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 
 	public void AddTables(TableCollection tableCollection)
 	{
-		foreach (Table t in tableCollection) {
+		foreach (Table tab in tableCollection) {
 			cancellationToken.Token.ThrowIfCancellationRequested();
 
-			if (!t.IsSystemObject) {
+			if (!tab.IsSystemObject) {
 				UpdateCounters();
-				ThreadsafeWrite.Write($"Enumerating table {t.Name}");
-				Add(t, t.Schema, t.Name, "TAB");
+				ThreadsafeWrite.Write($"Enumerating table {tab.Name}");
+				Add(tab, tab.Schema, tab.Name, "TAB");
+
+				// script triggers
+				foreach (Trigger trig in tab.Triggers) {
+					cancellationToken.Token.ThrowIfCancellationRequested();
+
+					UpdateCounters();
+					ThreadsafeWrite.Write($"Enumerating trigger {trig.Name}");
+					Add(trig, tab.Schema, trig.Name, "TRIG");
+				}
 			}
 		}
 	}
