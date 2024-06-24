@@ -125,7 +125,9 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 
 					UpdateCounters();
 					ThreadsafeWrite.Write($"Enumerating trigger {trig.Name}");
-					Add(trig, tab.Schema, trig.Name, "TRIG");
+
+					// name format: table-trigger eg dbo.MyTable-MyTrigger.TRIG
+					Add(trig, tab.Schema, $"{tab.Name}-{trig.Name}", "TRIG");
 				}
 			}
 		}
