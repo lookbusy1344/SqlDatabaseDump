@@ -40,7 +40,9 @@ internal static class Program
 			ParallelProcess(types, config, cancellationToken);
 		}
 
-		WriteAnyErrors(config);
+		if (!config.SkipErrors) {
+			WriteAnyErrors(config);
+		}
 
 		stopwatch.Stop();
 		var seconds = Convert.ToDouble(stopwatch.ElapsedMilliseconds) / 1000.0;
@@ -120,8 +122,10 @@ internal static class Program
 		var database = pico.GetParamOpt("-d", "--database") ?? Environment.GetEnvironmentVariable("DB_DATABASE");
 		var dir = pico.GetParamOpt("-o", "--dir") ?? Environment.GetEnvironmentVariable("DB_DIR");
 		var maxparallel = ParseOrDefault(pico.GetParamOpt("-p", "--parallel"), DefaultMaxParallel);
+
 		var singlethread = pico.Contains("-s", "--singlethread");
 		var replace = pico.Contains("-r", "--replace");
+		var skiperrors = pico.Contains("-e", "--skiperrors");
 
 		pico.Finished();
 
@@ -133,7 +137,8 @@ internal static class Program
 
 		dir = DumpDb.EnsurePathExists(dir);
 
-		return new Config(instance, database, dir, maxparallel, singlethread, replace);
+		return new Config(instance, database, dir, maxparallel,
+			singlethread, replace, skiperrors);
 	}
 
 	private static void WriteAnyErrors(Config config)
@@ -172,6 +177,7 @@ internal static class Program
 		  -r, --replace              Replace existing files (default is to fail if file exists)
 		  -s, --singlethread         Single thread processing
 		  -p, --parallel <n>         Maximum parallel tasks 1..16 (default is 8)
+		  -e, --skiperrors           Skip errors without writing to file
 		  -h, --help, -?             Help information
 		""";
 }

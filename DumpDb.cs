@@ -78,7 +78,10 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 				ThreadsafeWrite.Write($"Failed to script {o.FullName}: {ex.Message}");
 
 				Shared.ErrorObjects.Add(o.FullName);
-				WritePlaceMarker(o, "-- Failed to script object");
+
+				if (!config.SkipErrors) {
+					WritePlaceMarker(o, "-- Failed to script object");
+				}
 			}
 		}
 	}
