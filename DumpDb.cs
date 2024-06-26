@@ -102,8 +102,6 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 
 			foreach (var s in sc) {
 				wr.WriteLine(s);
-				//wr.WriteLine("GO");
-				wr.WriteLine();
 			}
 
 			wr.Close();
