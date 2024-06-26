@@ -36,6 +36,8 @@ internal sealed class ScriptableObject
 
 	private IScriptable Scriptable { get; }
 
+	private readonly IReadOnlyList<IScriptable>? Subscripts;
+
 	private string? Schema { get; }
 
 	private string Ext { get; }
@@ -63,12 +65,13 @@ internal sealed class ScriptableObject
 	/// <summary>
 	/// Constructor for general scriptable objects
 	/// </summary>
-	public ScriptableObject(IScriptable script, string? schema, string name, string extension)
+	public ScriptableObject(IScriptable script, string? schema, string name, string extension, IReadOnlyList<IScriptable>? subscripts)
 	{
 		Scriptable = script;
 		Schema = schema;
 		Name = name.Replace('\\', '-');
 		Ext = extension;
+		Subscripts = subscripts;
 	}
 
 	/// <summary>
@@ -84,7 +87,41 @@ internal sealed class ScriptableObject
 	}
 
 	/// <summary>
-	/// Script the object
+	/// Script the object, and any nested sub-scripts
 	/// </summary>
-	public StringCollection Script() => Scriptable.Script(ScriptOpts);
+	public IReadOnlyList<string> Script()
+	{
+		// main script
+		var main = Scriptable.Script(ScriptOpts);
+
+		var additional = Subscripts == null ? 0 : Subscripts.Count * 4;
+		var result = new List<string>(main.Count + additional);
+
+		foreach (var s in main) {
+			if (!string.IsNullOrWhiteSpace(s)) {
+				result.Add(s);
+				result.Add("GO");
+				result.Add(string.Empty);
+			}
+		}
+
+		// sub-scripts
+		if (Subscripts?.Count > 0) {
+			result.Add("-- ============================ Additional sub-objects ============================");
+			result.Add(string.Empty);
+
+			foreach (var sub in Subscripts) {
+				var subcol = sub.Script(ScriptOpts);
+				foreach (var s in subcol) {
+					if (!string.IsNullOrWhiteSpace(s)) {
+						result.Add(s);
+						result.Add("GO");
+						result.Add(string.Empty);
+					}
+				}
+			}
+		}
+
+		return result;
+	}
 }
