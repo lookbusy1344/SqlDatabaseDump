@@ -30,7 +30,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 		items.Add(new ScriptableObject(db, databaseName));
 	}
 
-	public void AddTables(TableCollection tableCollection, bool seperateTriggers)
+	public void AddTables(TableCollection tableCollection, bool separateTriggers)
 	{
 		foreach (Table tab in tableCollection) {
 			cancellationToken.Token.ThrowIfCancellationRequested();
@@ -39,8 +39,8 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 				UpdateCounters();
 				ThreadsafeWrite.Write($"Enumerating table {tab.Name}");
 
-				if (seperateTriggers) {
-					// create seperate script objects for table and any triggers
+				if (separateTriggers) {
+					// create separate script objects for table and any triggers
 					Add(tab, tab.Schema, tab.Name, "TAB");
 
 					// script triggers

@@ -19,6 +19,9 @@ internal static class Program
 		var config = BuildConfig(args);
 
 		Console.WriteLine($"Dumping '{config.DatabaseName}' from '{config.InstanceName}' into '{config.OutputDirectory}'");
+		if (config.SeparateTriggers) {
+			Console.WriteLine("Creating separate files for triggers");
+		}
 		if (config.SingleThread) {
 			Console.WriteLine("Single thread processing");
 		}
@@ -122,9 +125,10 @@ internal static class Program
 		var dir = pico.GetParamOpt("-o", "--dir") ?? Environment.GetEnvironmentVariable("DB_DIR");
 		var maxparallel = ParseOrDefault(pico.GetParamOpt("-p", "--parallel"), DefaultMaxParallel);
 
-		var singlethread = pico.Contains("-s", "--singlethread");
+		var singlethread = pico.Contains("-s", "--single-thread");
 		var replace = pico.Contains("-r", "--replace");
-		var skiperrors = pico.Contains("-e", "--skiperrors");
+		var skiperrors = pico.Contains("-e", "--skip-errors");
+		var separatetriggers = pico.Contains("-t", "--separate-triggers");
 
 		pico.Finished();
 
@@ -137,7 +141,7 @@ internal static class Program
 		dir = DumpDb.EnsurePathExists(dir);
 
 		return new Config(instance, database, dir, maxparallel,
-			singlethread, replace, skiperrors);
+			singlethread, replace, skiperrors, separatetriggers);
 	}
 
 	private static void WriteAnyErrors(Config config)
@@ -173,10 +177,11 @@ internal static class Program
 		  -o, --dir <dir>            Output directory                   (or DB_DIR environment variable)
 
 		Options:
+		  -t, --separate-triggers    Create separate files for triggers
 		  -r, --replace              Replace existing files (default is to fail if file exists)
-		  -s, --singlethread         Single thread processing
+		  -s, --single-thread        Single thread processing
 		  -p, --parallel <n>         Maximum parallel tasks 1..16 (default is 8)
-		  -e, --skiperrors           Skip errors without writing to file
+		  -e, --skip-errors          Skip errors without writing to file
 		  -h, --help, -?             Help information
 		""";
 }
