@@ -36,6 +36,8 @@ internal sealed class ScriptableObject
 
 	private IScriptable Scriptable { get; }
 
+	private readonly IReadOnlyList<IScriptable>? Subscripts;
+
 	private string? Schema { get; }
 
 	private string Ext { get; }
@@ -63,12 +65,13 @@ internal sealed class ScriptableObject
 	/// <summary>
 	/// Constructor for general scriptable objects
 	/// </summary>
-	public ScriptableObject(IScriptable script, string? schema, string name, string extension)
+	public ScriptableObject(IScriptable script, string? schema, string name, string extension, IReadOnlyList<IScriptable>? subscripts)
 	{
 		Scriptable = script;
 		Schema = schema;
 		Name = name.Replace('\\', '-');
 		Ext = extension;
+		Subscripts = subscripts;
 	}
 
 	/// <summary>
@@ -84,7 +87,37 @@ internal sealed class ScriptableObject
 	}
 
 	/// <summary>
-	/// Script the object
+	/// Script the object, and any nested sub-scripts
 	/// </summary>
-	public StringCollection Script() => Scriptable.Script(ScriptOpts);
+	public IReadOnlyList<string> Script()
+	{
+		var result = new List<string>(20);
+
+		// main script
+		var main = Scriptable.Script(ScriptOpts);
+		foreach (var s in main) {
+			if (s != null) {
+				result.Add(s);
+				result.Add("GO");
+			}
+		}
+
+		if (Subscripts == null) {
+			return result;
+		}
+
+		// sub-scripts
+		foreach (var sub in Subscripts) {
+			var subcol = sub.Script(ScriptOpts);
+			foreach (var s in subcol) {
+				if (!string.IsNullOrWhiteSpace(s)) {
+					result.Add(string.Empty);
+					result.Add(s);
+					result.Add("GO");
+				}
+			}
+		}
+
+		return result;
+	}
 }

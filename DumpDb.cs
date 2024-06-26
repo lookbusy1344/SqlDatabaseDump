@@ -19,7 +19,7 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 		switch (scriptType) {
 			case Scriptable.Tables:
 				list.AddDatabase(myDB, config.DatabaseName);
-				list.AddTables(myDB.Tables);
+				list.AddTables(myDB.Tables, false);
 				break;
 			case Scriptable.Views:
 				list.AddViews(myDB.Views);
@@ -102,7 +102,7 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 
 			foreach (var s in sc) {
 				wr.WriteLine(s);
-				wr.WriteLine("GO");
+				//wr.WriteLine("GO");
 				wr.WriteLine();
 			}
 
