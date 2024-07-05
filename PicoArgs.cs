@@ -3,18 +3,18 @@ namespace PicoArgs_dotnet;
 /*  PICOARGS_DOTNET - a tiny command line argument parser for .NET
     https://github.com/lookbusy1344/PicoArgs-dotnet
 
-    Version 1.4.0 - 24 Jun 2024
+    Version 1.4.0 - 05 Jul 2024
 
     Example usage:
 
 	var pico = new PicoArgs(args);
 
 	bool verbose = pico.Contains("-v", "--verbose");  // true if any of these switches are present
-	string pattern = pico.GetParamOpt("-t", "--pattern") ?? "*.txt";  // optional parameter
+	string? pattern = pico.GetParamOpt("-t", "--pattern") ?? "*.txt";  // optional parameter
 	string requiredpath = pico.GetParam("-p", "--path");  // mandatory parameter, throws if not present
 	string[] files = pico.GetMultipleParams("-f", "--file");  // multiple parameters returned in string[]
 	string command = pico.GetCommand();  // first parameter, throws if not present
-	string commandopt = pico.GetCommandOpt();  // first parameter, null if not present
+	string? commandopt = pico.GetCommandOpt();  // first parameter, null if not present
 
 	pico.Finished();  // We are done. Throw if there are any unused parameters
 
