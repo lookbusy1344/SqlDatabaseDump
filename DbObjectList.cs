@@ -55,15 +55,17 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 					}
 				} else {
 					// create a single script object for table and all triggers (triggers as sub-objects)
-					var triggers = new List<Trigger>();
+					List<Trigger>? triggers = null;
 
 					foreach (Trigger trig in tab.Triggers) {
 						cancellationToken.Token.ThrowIfCancellationRequested();
 						ThreadsafeWrite.Write($"Enumerating trigger {trig.Name}");
+
+						triggers ??= new(tab.Triggers.Count);
 						triggers.Add(trig);
 					}
 
-					Add(tab, tab.Schema, tab.Name, "TAB", triggers.Count > 0 ? triggers : null);
+					Add(tab, tab.Schema, tab.Name, "TAB", triggers);
 				}
 			}
 		}
