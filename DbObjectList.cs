@@ -40,35 +40,52 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 				ThreadsafeWrite.Write($"Enumerating table {tab.Name}");
 
 				if (separateTriggers) {
-					// create separate script objects for table and any triggers
-					Add(tab, tab.Schema, tab.Name, "TAB");
-
-					// script triggers
-					foreach (Trigger trig in tab.Triggers) {
-						cancellationToken.Token.ThrowIfCancellationRequested();
-
-						UpdateCounters();
-						ThreadsafeWrite.Write($"Enumerating trigger {trig.Name}");
-
-						// name format: table-trigger eg dbo.MyTable-MyTrigger.TRIG
-						Add(trig, tab.Schema, $"{tab.Name}-{trig.Name}", "TRIG");
-					}
+					SeparateTriggers(tab);
 				} else {
-					// create a single script object for table and all triggers (triggers as sub-objects)
-					List<Trigger>? triggers = null;
-
-					foreach (Trigger trig in tab.Triggers) {
-						cancellationToken.Token.ThrowIfCancellationRequested();
-						ThreadsafeWrite.Write($"Enumerating trigger {trig.Name}");
-
-						triggers ??= new(tab.Triggers.Count);
-						triggers.Add(trig);
-					}
-
-					Add(tab, tab.Schema, tab.Name, "TAB", triggers);
+					MergedTriggers(tab);
 				}
 			}
 		}
+	}
+
+	/// <summary>
+	/// Create separate script objects for table and any triggers
+	/// </summary>
+	private void SeparateTriggers(Table tab)
+	{
+		// create separate script objects for table and any triggers
+		Add(tab, tab.Schema, tab.Name, "TAB", null);
+
+		// script triggers
+		foreach (Trigger trig in tab.Triggers) {
+			cancellationToken.Token.ThrowIfCancellationRequested();
+
+			UpdateCounters();
+			ThreadsafeWrite.Write($"Enumerating trigger {trig.Name}");
+
+			// name format: table-trigger eg dbo.MyTable-MyTrigger.TRIG
+			Add(trig, tab.Schema, $"{tab.Name}-{trig.Name}", "TRIG", null);
+		}
+	}
+
+	/// <summary>
+	/// Create a single script object for table and any triggers
+	/// </summary>
+	private void MergedTriggers(Table tab)
+	{
+		// create a single script object for table and all triggers (triggers as sub-objects)
+		List<Trigger>? triggers = null;
+
+		foreach (Trigger trig in tab.Triggers) {
+			cancellationToken.Token.ThrowIfCancellationRequested();
+			ThreadsafeWrite.Write($"Enumerating trigger {trig.Name}");
+
+			triggers ??= new(tab.Triggers.Count);
+			triggers.Add(trig);
+		}
+
+		// add the table, with triggers as sub-objects
+		Add(tab, tab.Schema, tab.Name, "TAB", triggers);
 	}
 
 	public void AddViews(ViewCollection viewCollection)
