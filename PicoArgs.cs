@@ -3,7 +3,7 @@ namespace PicoArgs_dotnet;
 /*  PICOARGS_DOTNET - a tiny command line argument parser for .NET
     https://github.com/lookbusy1344/PicoArgs-dotnet
 
-    Version 1.4.0 - 05 Jul 2024
+    Version 1.5.0 - 07 Jul 2024
 
     Example usage:
 
@@ -31,7 +31,7 @@ namespace PicoArgs_dotnet;
 /// </remarks>
 public class PicoArgs(IEnumerable<string> args, bool recogniseEquals = true)
 {
-	private readonly List<KeyValue> args = args.Select(a => KeyValue.Build(a, recogniseEquals)).ToList();
+	private readonly List<KeyValue> args = ProcessItems(args, recogniseEquals).ToList();
 	private bool finished;
 
 	/// <summary>
@@ -208,6 +208,68 @@ public class PicoArgs(IEnumerable<string> args, bool recogniseEquals = true)
 		if (finished) {
 			throw new PicoArgsException(70, "Cannot use PicoArgs after calling Finished()");
 		}
+	}
+
+	/// <summary>
+	/// Helper function to process the command line arguments. Splits multiple switches into individual switches
+	/// eg -abc becomes -a -b -c
+	/// </summary>
+	private static IEnumerable<KeyValue> ProcessItems(IEnumerable<string> args, bool recogniseEquals)
+	{
+		foreach (var arg in args) {
+			if (MultipleSwitches(arg)) {
+				// split multiple switches into individual switches eg "-abc" -> "-a" "-b" "-c"
+
+				if (arg.Contains('=')) {
+					// multiple switches, with equals eg "-abc=code"
+
+					if (!recogniseEquals) {
+						// contains equals but we arent recognising them
+						throw new PicoArgsException(90, $"Unexpected '=' in multi-switch \"{arg}\"");
+					}
+
+					if (arg.Contains('\'') || arg.Contains('\"')) {
+						// contains quotes, which is not supported here
+						throw new PicoArgsException(90, $"Cannot handle multi-switch containing quotes \"{arg}\"");
+					}
+
+					var split = arg.Split(['='], 2);
+					if (split.Length != 2) {
+						throw new PicoArgsException(90, $"Cannot split \"{arg}\" into two on '='");
+					}
+
+					// append the switches before the equals eg "-abc"
+					foreach (var c in split[0][1..]) {
+						yield return KeyValue.Build($"-{c}", false);
+					}
+
+					// finally yield the appended value, after the equals eg "code"
+					yield return KeyValue.Build(split[1], false);
+				} else {
+					// multiple switches, no equals or ignore equals eg "-abc"
+					foreach (var c in arg[1..]) {
+						yield return KeyValue.Build($"-{c}", false);
+					}
+				}
+			} else {
+				// just a single item eg "-a" or "--key=value" or "action"
+				yield return KeyValue.Build(arg, recogniseEquals);
+			}
+		}
+	}
+
+	/// <summary>
+	/// Check if this is multiple switches eg -abc. This always respects '=' because its handled elsewhere
+	/// </summary>
+	private static bool MultipleSwitches(string arg)
+	{
+		var equals = arg.IndexOf('=');
+		if (equals > -1) {
+			// contains equals, so take the first part eg "-kv=value" becomes "-kv"
+			arg = arg[..equals];
+		}
+
+		return arg.Length > 2 && arg.StartsWith('-') && arg[1] != '-';
 	}
 }
 
