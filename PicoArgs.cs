@@ -3,7 +3,7 @@ namespace PicoArgs_dotnet;
 /*  PICOARGS_DOTNET - a tiny command line argument parser for .NET
     https://github.com/lookbusy1344/PicoArgs-dotnet
 
-    Version 1.5.0 - 07 Jul 2024
+    Version 1.5.1 - 09 Jul 2024
 
     Example usage:
 
@@ -217,36 +217,21 @@ public class PicoArgs(IEnumerable<string> args, bool recogniseEquals = true)
 	private static IEnumerable<KeyValue> ProcessItems(IEnumerable<string> args, bool recogniseEquals)
 	{
 		foreach (var arg in args) {
-			if (MultipleSwitches(arg)) {
-				// split multiple switches into individual switches eg "-abc" -> "-a" "-b" "-c"
+			var switches = CountCombinedSwitches(arg);
+			if (switches > 1) {
+				// split combined switches into individual switches eg "-abc" -> "-a" "-b" "-c"
 
 				if (arg.Contains('=')) {
-					// multiple switches, with equals eg "-abc=code"
-
-					if (!recogniseEquals) {
-						// contains equals but we arent recognising them
-						throw new PicoArgsException(90, $"Unexpected '=' in multi-switch \"{arg}\"");
+					// combined switches, with equals eg "-abc=code"
+					// first process all but the last, eg -a -b but not -c=code
+					for (var c = 1; c < switches; ++c) {
+						yield return KeyValue.Build($"-{arg[c]}", false);
 					}
 
-					if (arg.Contains('\'') || arg.Contains('\"')) {
-						// contains quotes, which is not supported here
-						throw new PicoArgsException(90, $"Cannot handle multi-switch containing quotes \"{arg}\"");
-					}
-
-					var split = arg.Split(['='], 2);
-					if (split.Length != 2) {
-						throw new PicoArgsException(90, $"Cannot split \"{arg}\" into two on '='");
-					}
-
-					// append the switches before the equals eg "-abc"
-					foreach (var c in split[0][1..]) {
-						yield return KeyValue.Build($"-{c}", false);
-					}
-
-					// finally yield the appended value, after the equals eg "code"
-					yield return KeyValue.Build(split[1], false);
+					// finally yield the final param with equals eg "-c=code" or "-c='code'"
+					yield return KeyValue.Build($"-{arg[switches..]}", recogniseEquals);
 				} else {
-					// multiple switches, no equals or ignore equals eg "-abc"
+					// multiple switches, no equals eg "-abc"
 					foreach (var c in arg[1..]) {
 						yield return KeyValue.Build($"-{c}", false);
 					}
@@ -259,17 +244,23 @@ public class PicoArgs(IEnumerable<string> args, bool recogniseEquals = true)
 	}
 
 	/// <summary>
-	/// Check if this is multiple switches eg -abc. This always respects '=' because its handled elsewhere
+	/// Check if combined switches eg -abc. Returns the number of combined switches eg 3. This always respects '=' because its handled elsewhere
 	/// </summary>
-	private static bool MultipleSwitches(string arg)
+	private static int CountCombinedSwitches(string arg)
 	{
-		var equals = arg.IndexOf('=');
-		if (equals > -1) {
-			// contains equals, so take the first part eg "-kv=value" becomes "-kv"
-			arg = arg[..equals];
+		if (arg.Length > 2 && arg.StartsWith('-')) {
+			// only consider the part before the equals eg "-abc=value" -> "-abc"
+			arg = arg.Split('=', 2)[0];
 		}
 
-		return arg.Length > 2 && arg.StartsWith('-') && arg[1] != '-';
+		if (arg.Length > 2 && arg.StartsWith('-') && arg[1] != '-') {
+			// if it starts with a dash, and is longer than 2 characters, and the second character is not a dash
+			// we have length-1 items eg "-abc" has 3 switches
+			return arg.Length - 1;
+		} else {
+			// just a standard single-switch
+			return 1;
+		}
 	}
 }
 
