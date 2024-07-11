@@ -77,7 +77,7 @@ internal static class Program
 			});
 		}
 		catch (AggregateException ae) {
-			// handle exceptions from Parallel.ForEach, but ignore OperationCanceledException, they are just a side-effect
+			// handle exceptions from Parallel.ForEach, but ignore OperationCancelledException, they are just a side-effect
 			foreach (var e in ae.InnerExceptions) {
 				if (e != ae.InnerException && e is not OperationCanceledException) {
 					// display significant inner exceptions
@@ -125,25 +125,25 @@ internal static class Program
 		var instance = pico.GetParamOpt("-i", "--instance") ?? Environment.GetEnvironmentVariable("DB_INSTANCE");
 		var database = pico.GetParamOpt("-d", "--database") ?? Environment.GetEnvironmentVariable("DB_DATABASE");
 		var dir = pico.GetParamOpt("-o", "--dir") ?? Environment.GetEnvironmentVariable("DB_DIR");
-		var maxparallel = ParseOrDefault(pico.GetParamOpt("-p", "--parallel"), DefaultMaxParallel);
+		var maxParallel = ParseOrDefault(pico.GetParamOpt("-p", "--parallel"), DefaultMaxParallel);
 
 		var extendedProperties = pico.Contains("-e", "--extended-properties");
-		var singlethread = pico.Contains("-s", "--single-thread");
+		var singleThread = pico.Contains("-s", "--single-thread");
 		var replace = pico.Contains("-r", "--replace");
-		var skiperrors = pico.Contains("-k", "--skip-errors");
+		var skipErrors = pico.Contains("-k", "--skip-errors");
 
 		pico.Finished();
 
 		// ensure required parameters are present
-		if (string.IsNullOrWhiteSpace(instance) || string.IsNullOrWhiteSpace(database) || string.IsNullOrWhiteSpace(dir) || maxparallel < 1 || maxparallel > 16) {
+		if (string.IsNullOrWhiteSpace(instance) || string.IsNullOrWhiteSpace(database) || string.IsNullOrWhiteSpace(dir) || maxParallel < 1 || maxParallel > 16) {
 			Console.WriteLine(CommandLineMessage);
 			Environment.Exit(1);
 		}
 
 		dir = DumpDb.EnsurePathExists(dir);
 
-		return new Config(instance, database, dir, maxparallel,
-			singlethread, replace, skiperrors, extendedProperties);
+		return new Config(instance, database, dir, maxParallel,
+			singleThread, replace, skipErrors, extendedProperties);
 	}
 
 	private static void WriteAnyErrors(Config config)

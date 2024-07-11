@@ -11,7 +11,7 @@ internal static class ThreadsafeWrite
 	private static readonly object lockObject = new();
 
 	/// <summary>
-	/// Threadsafe Console.WriteLine
+	/// Thread safe Console.WriteLine
 	/// </summary>
 	public static void Write(string s)
 	{

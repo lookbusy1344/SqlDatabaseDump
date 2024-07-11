@@ -33,7 +33,7 @@ internal static class Shared
 	public static ScriptingOptions ScriptOptionsNormal { get; } = new() { DriAll = true, ScriptBatchTerminator = true, Triggers = true };
 
 	/// <summary>
-	/// Threadsafe counter for the number of items in the queue
+	/// Thread safe counter for the number of items in the queue
 	/// </summary>
 	public static SafeCounter QueueCounter { get; } = new();
 

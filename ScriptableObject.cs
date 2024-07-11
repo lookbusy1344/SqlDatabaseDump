@@ -51,7 +51,7 @@ internal sealed class ScriptableObject
 		get
 		{
 			if (OverrideFilename != null) {
-				return OverrideFilename;                // explicit overriden filename
+				return OverrideFilename;                // explicit overridden filename
 			} else {
 				if (Schema != null) {
 					return $"{Schema}.{Name}.{Ext}";    // filename including schema

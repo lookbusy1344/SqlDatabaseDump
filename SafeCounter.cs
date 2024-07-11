@@ -29,7 +29,7 @@ internal sealed class SafeCounter(int counter = 0) // this class exists to wrap 
 	/// Reset the counter in a thread safe way. Lock free
 	/// </summary>
 	/// <returns>The original value</returns>
-	public int Reset(int newvalue = 0) => Interlocked.Exchange(ref counter, newvalue);
+	public int Reset(int newValue = 0) => Interlocked.Exchange(ref counter, newValue);
 
 	/// <summary>
 	/// Add a value to the counter in a thread safe way. Lock free
