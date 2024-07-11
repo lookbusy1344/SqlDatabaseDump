@@ -29,6 +29,12 @@ internal static class Program
 			Console.WriteLine("Including extended properties");
 			Shared.ScriptOptionsFull.ExtendedProperties = true;
 			Shared.ScriptOptionsNormal.ExtendedProperties = true;
+			Shared.ScriptOptionsMinimal.ExtendedProperties = true;
+		}
+		if (config.WithDependencies) {
+			Console.WriteLine("Including dependencies");
+			Shared.ScriptOptionsFull.WithDependencies = true;
+			Shared.ScriptOptionsNormal.WithDependencies = true;
 		}
 
 		var stopwatch = System.Diagnostics.Stopwatch.StartNew();
@@ -128,6 +134,7 @@ internal static class Program
 		var maxParallel = ParseOrDefault(pico.GetParamOpt("-p", "--parallel"), DefaultMaxParallel);
 
 		var extendedProperties = pico.Contains("-e", "--extended-properties");
+		var withDependencies = pico.Contains("-w", "--with-dependencies");
 		var singleThread = pico.Contains("-s", "--single-thread");
 		var replace = pico.Contains("-r", "--replace");
 		var skipErrors = pico.Contains("-k", "--skip-errors");
@@ -143,7 +150,7 @@ internal static class Program
 		dir = DumpDb.EnsurePathExists(dir);
 
 		return new Config(instance, database, dir, maxParallel,
-			singleThread, replace, skipErrors, extendedProperties);
+			singleThread, replace, skipErrors, extendedProperties, withDependencies);
 	}
 
 	private static void WriteAnyErrors(Config config)
@@ -180,6 +187,7 @@ internal static class Program
 
 		Options:
 		  -e, --extended-properties  Include extended properties
+		  -w, --with-dependencies    Include dependencies
 		  -r, --replace              Replace existing files (default is to fail if file exists)
 		  -s, --single-thread        Single thread processing
 		  -p, --parallel <n>         Maximum parallel tasks 1..16 (default is 8)

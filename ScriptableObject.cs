@@ -67,13 +67,13 @@ internal sealed class ScriptableObject
 	/// <summary>
 	/// Constructor for general scriptable objects
 	/// </summary>
-	public ScriptableObject(IScriptable script, string? schema, string name, string extension, bool tableOptions)
+	public ScriptableObject(IScriptable script, string? schema, string name, string extension, ScriptingOptions options)
 	{
 		Scriptable = script;
 		Schema = schema;
 		Name = name.Replace('\\', '-');
 		Ext = extension;
-		Options = tableOptions ? Shared.ScriptOptionsFull : Shared.ScriptOptionsNormal;
+		Options = options;
 	}
 
 	/// <summary>
@@ -86,7 +86,7 @@ internal sealed class ScriptableObject
 		Schema = null;
 		Name = "database settings";
 		Ext = string.Empty;
-		Options = Shared.ScriptOptionsNormal;
+		Options = Shared.ScriptOptionsMinimal;
 	}
 
 	/// <summary>

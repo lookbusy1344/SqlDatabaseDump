@@ -15,8 +15,8 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 	/// <summary>
 	/// Add a scriptable object to the list
 	/// </summary>
-	private void Add(IScriptable script, string? schema, string name, string extension, bool tableOptions = false) =>
-		items.Add(new ScriptableObject(script, schema, name, extension, tableOptions));
+	private void Add(IScriptable script, string? schema, string name, string extension, ScriptingOptions? options = null) =>
+		items.Add(new ScriptableObject(script, schema, name, extension, options ?? Shared.ScriptOptionsNormal));
 
 	private static void UpdateCounters()
 	{
@@ -38,7 +38,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 			if (!tab.IsSystemObject) {
 				UpdateCounters();
 				ThreadsafeWrite.Write($"Enumerating table {tab.Name}");
-				Add(tab, tab.Schema, tab.Name, "TAB", true);
+				Add(tab, tab.Schema, tab.Name, "TAB", Shared.ScriptOptionsFull);
 			}
 		}
 	}
@@ -51,7 +51,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 			if (!v.IsSystemObject) {
 				UpdateCounters();
 				ThreadsafeWrite.Write($"Enumerating view {v.Name}");
-				Add(v, v.Schema, v.Name, "VIW", true);
+				Add(v, v.Schema, v.Name, "VIW", Shared.ScriptOptionsFull);
 			}
 		}
 	}
@@ -90,7 +90,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 			if (!r.IsFixedRole) {
 				UpdateCounters();
 				ThreadsafeWrite.Write($"Enumerating role {r.Name}");
-				Add(r, null, r.Name, "ROLE");
+				Add(r, null, r.Name, "ROLE", Shared.ScriptOptionsMinimal);
 			}
 		}
 	}
