@@ -25,6 +25,11 @@ internal static class Program
 		if (config.ReplaceExistingFiles) {
 			Console.WriteLine("Replacing existing files");
 		}
+		if (config.ExtendedProperties) {
+			Console.WriteLine("Including extended properties");
+			Shared.ScriptOptionsFull.ExtendedProperties = true;
+			Shared.ScriptOptionsNormal.ExtendedProperties = true;
+		}
 
 		var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
@@ -122,9 +127,10 @@ internal static class Program
 		var dir = pico.GetParamOpt("-o", "--dir") ?? Environment.GetEnvironmentVariable("DB_DIR");
 		var maxparallel = ParseOrDefault(pico.GetParamOpt("-p", "--parallel"), DefaultMaxParallel);
 
+		var extendedProperties = pico.Contains("-e", "--extended-properties");
 		var singlethread = pico.Contains("-s", "--single-thread");
 		var replace = pico.Contains("-r", "--replace");
-		var skiperrors = pico.Contains("-e", "--skip-errors");
+		var skiperrors = pico.Contains("-k", "--skip-errors");
 
 		pico.Finished();
 
@@ -137,7 +143,7 @@ internal static class Program
 		dir = DumpDb.EnsurePathExists(dir);
 
 		return new Config(instance, database, dir, maxparallel,
-			singlethread, replace, skiperrors);
+			singlethread, replace, skiperrors, extendedProperties);
 	}
 
 	private static void WriteAnyErrors(Config config)
@@ -173,10 +179,11 @@ internal static class Program
 		  -o, --dir <dir>            Output directory                   (or DB_DIR environment variable)
 
 		Options:
+		  -e, --extended-properties  Include extended properties
 		  -r, --replace              Replace existing files (default is to fail if file exists)
 		  -s, --single-thread        Single thread processing
 		  -p, --parallel <n>         Maximum parallel tasks 1..16 (default is 8)
-		  -e, --skip-errors          Skip errors without writing to file
+		  -k, --skip-errors          Skip errors without writing to file
 		  -h, --help, -?             Help information
 		""";
 }

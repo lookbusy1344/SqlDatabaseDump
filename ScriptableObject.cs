@@ -32,32 +32,6 @@ internal enum Scriptable
 [System.Diagnostics.DebuggerDisplay("{FullName}")]
 internal sealed class ScriptableObject
 {
-	private static readonly ScriptingOptions ScriptOptionsFull = new() {
-		DriAll = true,
-		Indexes = true,
-		ClusteredIndexes = true,
-		ColumnStoreIndexes = true,
-		NonClusteredIndexes = true,
-		FullTextCatalogs = true,
-		FullTextIndexes = true,
-		FullTextStopLists = true,
-		IncludeFullTextCatalogRootPath = true,
-		LoginSid = true,
-		OptimizerData = true,
-		Permissions = true,
-		PrimaryObject = true,
-		ScriptDataCompression = true,
-		ScriptOwner = true,
-		ScriptSchema = true,
-		SpatialIndexes = true,
-		XmlIndexes = true,
-		ScriptBatchTerminator = true,
-		Triggers = true,
-		//WithDependencies = true,
-		//ExtendedProperties = true,
-	};
-	private static readonly ScriptingOptions ScriptOptionsNormal = new() { DriAll = true, ScriptBatchTerminator = true, Triggers = true };
-
 	private IScriptable Scriptable { get; }
 
 	//private readonly IReadOnlyList<IScriptable>? Subscripts;
@@ -99,7 +73,7 @@ internal sealed class ScriptableObject
 		Schema = schema;
 		Name = name.Replace('\\', '-');
 		Ext = extension;
-		Options = tableOptions ? ScriptOptionsFull : ScriptOptionsNormal;
+		Options = tableOptions ? Shared.ScriptOptionsFull : Shared.ScriptOptionsNormal;
 	}
 
 	/// <summary>
@@ -112,7 +86,7 @@ internal sealed class ScriptableObject
 		Schema = null;
 		Name = "database settings";
 		Ext = string.Empty;
-		Options = ScriptOptionsNormal;
+		Options = Shared.ScriptOptionsNormal;
 	}
 
 	/// <summary>
