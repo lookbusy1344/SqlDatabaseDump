@@ -32,13 +32,12 @@ internal enum Scriptable
 [System.Diagnostics.DebuggerDisplay("{FullName}")]
 internal sealed class ScriptableObject
 {
-	private static readonly ScriptingOptions ScriptOptionsTable = new() {
+	private static readonly ScriptingOptions ScriptOptionsFull = new() {
 		DriAll = true,
 		Indexes = true,
 		ClusteredIndexes = true,
 		ColumnStoreIndexes = true,
 		NonClusteredIndexes = true,
-		ExtendedProperties = true,
 		FullTextCatalogs = true,
 		FullTextIndexes = true,
 		FullTextStopLists = true,
@@ -52,9 +51,11 @@ internal sealed class ScriptableObject
 		ScriptSchema = true,
 		SpatialIndexes = true,
 		XmlIndexes = true,
-		//Triggers = true,	// does this mean triggers will be automatically scripted?
 		ScriptBatchTerminator = true,
-		WithDependencies = true,
+
+		//Triggers = true,	// does this mean triggers will be automatically scripted?
+		//WithDependencies = true,
+		//ExtendedProperties = true,
 	};
 	private static readonly ScriptingOptions ScriptOptionsNormal = new() { DriAll = true, ScriptBatchTerminator = true, Triggers = true };
 
@@ -100,7 +101,7 @@ internal sealed class ScriptableObject
 		Name = name.Replace('\\', '-');
 		Ext = extension;
 		Subscripts = subscripts;
-		Options = tableOptions ? ScriptOptionsTable : ScriptOptionsNormal;
+		Options = tableOptions ? ScriptOptionsFull : ScriptOptionsNormal;
 	}
 
 	/// <summary>
