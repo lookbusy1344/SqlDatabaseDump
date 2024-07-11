@@ -34,6 +34,19 @@ internal static class Shared
 
 	public static ScriptingOptions ScriptOptionsMinimal { get; } = new() { DriAll = true, ScriptBatchTerminator = true, Triggers = true };
 
+	public static void WithExtendedProperties()
+	{
+		ScriptOptionsFull.ExtendedProperties = true;
+		ScriptOptionsNormal.ExtendedProperties = true;
+		ScriptOptionsMinimal.ExtendedProperties = true;
+	}
+
+	public static void WithDependencies()
+	{
+		ScriptOptionsFull.WithDependencies = true;
+		ScriptOptionsNormal.WithDependencies = true;
+	}
+
 	/// <summary>
 	/// Thread safe counter for the number of items in the queue
 	/// </summary>

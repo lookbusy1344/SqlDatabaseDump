@@ -27,14 +27,11 @@ internal static class Program
 		}
 		if (config.ExtendedProperties) {
 			Console.WriteLine("Including extended properties");
-			Shared.ScriptOptionsFull.ExtendedProperties = true;
-			Shared.ScriptOptionsNormal.ExtendedProperties = true;
-			Shared.ScriptOptionsMinimal.ExtendedProperties = true;
+			Shared.WithExtendedProperties();
 		}
 		if (config.WithDependencies) {
 			Console.WriteLine("Including dependencies");
-			Shared.ScriptOptionsFull.WithDependencies = true;
-			Shared.ScriptOptionsNormal.WithDependencies = true;
+			Shared.WithDependencies();
 		}
 
 		var stopwatch = System.Diagnostics.Stopwatch.StartNew();
