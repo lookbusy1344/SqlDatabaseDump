@@ -32,8 +32,31 @@ internal enum Scriptable
 [System.Diagnostics.DebuggerDisplay("{FullName}")]
 internal sealed class ScriptableObject
 {
-	private static readonly ScriptingOptions ScriptOptionsTable = new() { DriAll = true, Indexes = true };
-	private static readonly ScriptingOptions ScriptOptionsNormal = new() { DriAll = true };
+	private static readonly ScriptingOptions ScriptOptionsTable = new() {
+		DriAll = true,
+		Indexes = true,
+		ClusteredIndexes = true,
+		ColumnStoreIndexes = true,
+		NonClusteredIndexes = true,
+		ExtendedProperties = true,
+		FullTextCatalogs = true,
+		FullTextIndexes = true,
+		FullTextStopLists = true,
+		IncludeFullTextCatalogRootPath = true,
+		LoginSid = true,
+		OptimizerData = true,
+		Permissions = true,
+		PrimaryObject = true,
+		ScriptDataCompression = true,
+		ScriptOwner = true,
+		ScriptSchema = true,
+		SpatialIndexes = true,
+		XmlIndexes = true,
+		//Triggers = true,	// does this mean triggers will be automatically scripted?
+		ScriptBatchTerminator = true,
+		WithDependencies = true,
+	};
+	private static readonly ScriptingOptions ScriptOptionsNormal = new() { DriAll = true, ScriptBatchTerminator = true, Triggers = true };
 
 	private IScriptable Scriptable { get; }
 
