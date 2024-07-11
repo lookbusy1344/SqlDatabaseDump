@@ -32,7 +32,7 @@ internal enum Scriptable
 [System.Diagnostics.DebuggerDisplay("{FullName}")]
 internal sealed class ScriptableObject
 {
-	private static readonly ScriptingOptions ScriptOpts = new() { DriAll = true };
+	private static readonly ScriptingOptions ScriptOpts = new() { DriAll = true, Indexes = true };
 
 	private IScriptable Scriptable { get; }
 
