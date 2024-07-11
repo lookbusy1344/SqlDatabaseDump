@@ -12,6 +12,10 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 	{
 		var theServer = new Server(config.InstanceName);
 		myDB = theServer.Databases[config.DatabaseName];
+		if (myDB == null) {
+			throw new InvalidOperationException($"Database '{config.DatabaseName}' not found on '{config.InstanceName}'");
+		}
+
 		theServer.SetDefaultInitFields(true);
 
 		var list = new DbObjectList(cancellationToken);
