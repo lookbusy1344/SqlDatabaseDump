@@ -15,8 +15,8 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 	/// <summary>
 	/// Add a scriptable object to the list
 	/// </summary>
-	private void Add(IScriptable script, string? schema, string name, string extension, IReadOnlyList<IScriptable>? subscripts = null, bool tableOptions = false) =>
-		items.Add(new ScriptableObject(script, schema, name, extension, subscripts, tableOptions));
+	private void Add(IScriptable script, string? schema, string name, string extension, bool tableOptions = false) =>
+		items.Add(new ScriptableObject(script, schema, name, extension, tableOptions));
 
 	private static void UpdateCounters()
 	{
@@ -30,7 +30,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 		items.Add(new ScriptableObject(db, databaseName));
 	}
 
-	public void AddTables(TableCollection tableCollection, bool separateTriggers)
+	public void AddTables(TableCollection tableCollection)
 	{
 		foreach (Table tab in tableCollection) {
 			cancellationToken.Token.ThrowIfCancellationRequested();
@@ -38,54 +38,9 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 			if (!tab.IsSystemObject) {
 				UpdateCounters();
 				ThreadsafeWrite.Write($"Enumerating table {tab.Name}");
-
-				if (separateTriggers) {
-					SeparateTriggers(tab);
-				} else {
-					MergedTriggers(tab);
-				}
+				Add(tab, tab.Schema, tab.Name, "TAB", true);
 			}
 		}
-	}
-
-	/// <summary>
-	/// Create separate script objects for table and any triggers
-	/// </summary>
-	private void SeparateTriggers(Table tab)
-	{
-		// create separate script objects for table and any triggers
-		Add(tab, tab.Schema, tab.Name, "TAB", null, true);
-
-		// script triggers
-		foreach (Trigger trig in tab.Triggers) {
-			cancellationToken.Token.ThrowIfCancellationRequested();
-
-			UpdateCounters();
-			ThreadsafeWrite.Write($"Enumerating trigger {trig.Name}");
-
-			// name format: table-trigger eg dbo.MyTable-MyTrigger.TRIG
-			Add(trig, tab.Schema, $"{tab.Name}-{trig.Name}", "TRIG", null);
-		}
-	}
-
-	/// <summary>
-	/// Create a single script object for table and any triggers
-	/// </summary>
-	private void MergedTriggers(Table tab)
-	{
-		// create a single script object for table and all triggers (triggers as sub-objects)
-		List<Trigger>? triggers = null;
-
-		foreach (Trigger trig in tab.Triggers) {
-			cancellationToken.Token.ThrowIfCancellationRequested();
-			ThreadsafeWrite.Write($"Enumerating trigger {trig.Name}");
-
-			triggers ??= new(tab.Triggers.Count);
-			triggers.Add(trig);
-		}
-
-		// add the table, with triggers as sub-objects
-		Add(tab, tab.Schema, tab.Name, "TAB", triggers, true);
 	}
 
 	public void AddViews(ViewCollection viewCollection)
@@ -96,7 +51,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 			if (!v.IsSystemObject) {
 				UpdateCounters();
 				ThreadsafeWrite.Write($"Enumerating view {v.Name}");
-				Add(v, v.Schema, v.Name, "VIW", null, true);
+				Add(v, v.Schema, v.Name, "VIW", true);
 			}
 		}
 	}

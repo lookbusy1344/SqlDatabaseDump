@@ -52,8 +52,7 @@ internal sealed class ScriptableObject
 		SpatialIndexes = true,
 		XmlIndexes = true,
 		ScriptBatchTerminator = true,
-
-		//Triggers = true,	// does this mean triggers will be automatically scripted?
+		Triggers = true,
 		//WithDependencies = true,
 		//ExtendedProperties = true,
 	};
@@ -61,7 +60,7 @@ internal sealed class ScriptableObject
 
 	private IScriptable Scriptable { get; }
 
-	private readonly IReadOnlyList<IScriptable>? Subscripts;
+	//private readonly IReadOnlyList<IScriptable>? Subscripts;
 
 	private readonly ScriptingOptions Options;
 
@@ -94,13 +93,12 @@ internal sealed class ScriptableObject
 	/// <summary>
 	/// Constructor for general scriptable objects
 	/// </summary>
-	public ScriptableObject(IScriptable script, string? schema, string name, string extension, IReadOnlyList<IScriptable>? subscripts, bool tableOptions)
+	public ScriptableObject(IScriptable script, string? schema, string name, string extension, bool tableOptions)
 	{
 		Scriptable = script;
 		Schema = schema;
 		Name = name.Replace('\\', '-');
 		Ext = extension;
-		Subscripts = subscripts;
 		Options = tableOptions ? ScriptOptionsFull : ScriptOptionsNormal;
 	}
 
@@ -125,8 +123,8 @@ internal sealed class ScriptableObject
 		// main script
 		var main = Scriptable.Script(Options);
 
-		var additional = Subscripts == null ? 0 : Subscripts.Count * 4;
-		var result = new List<string>(main.Count + additional);
+		//var additional = Subscripts == null ? 0 : Subscripts.Count * 4;
+		var result = new List<string>(main.Count);
 
 		foreach (var s in main) {
 			if (!string.IsNullOrWhiteSpace(s)) {
@@ -137,21 +135,21 @@ internal sealed class ScriptableObject
 		}
 
 		// sub-scripts
-		if (Subscripts?.Count > 0) {
-			result.Add("-- ============================ Additional sub-objects ============================");
-			result.Add(string.Empty);
+		//if (Subscripts?.Count > 0) {
+		//	result.Add("-- ============================ Additional sub-objects ============================");
+		//	result.Add(string.Empty);
 
-			foreach (var sub in Subscripts) {
-				var subcol = sub.Script(ScriptOptionsNormal);
-				foreach (var s in subcol) {
-					if (!string.IsNullOrWhiteSpace(s)) {
-						result.Add(s);
-						result.Add("GO");
-						result.Add(string.Empty);
-					}
-				}
-			}
-		}
+		//	foreach (var sub in Subscripts) {
+		//		var subcol = sub.Script(ScriptOptionsNormal);
+		//		foreach (var s in subcol) {
+		//			if (!string.IsNullOrWhiteSpace(s)) {
+		//				result.Add(s);
+		//				result.Add("GO");
+		//				result.Add(string.Empty);
+		//			}
+		//		}
+		//	}
+		//}
 
 		return result;
 	}

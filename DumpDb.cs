@@ -23,7 +23,7 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 		switch (scriptType) {
 			case Scriptable.Tables:
 				list.AddDatabase(myDB, config.DatabaseName);
-				list.AddTables(myDB.Tables, config.SeparateTriggers);
+				list.AddTables(myDB.Tables);
 				break;
 			case Scriptable.Views:
 				list.AddViews(myDB.Views);
