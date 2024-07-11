@@ -15,8 +15,8 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 	/// <summary>
 	/// Add a scriptable object to the list
 	/// </summary>
-	private void Add(IScriptable script, string? schema, string name, string extension, IReadOnlyList<IScriptable>? subscripts = null) =>
-		items.Add(new ScriptableObject(script, schema, name, extension, subscripts));
+	private void Add(IScriptable script, string? schema, string name, string extension, IReadOnlyList<IScriptable>? subscripts = null, bool tableOptions = false) =>
+		items.Add(new ScriptableObject(script, schema, name, extension, subscripts, tableOptions));
 
 	private static void UpdateCounters()
 	{
@@ -54,7 +54,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 	private void SeparateTriggers(Table tab)
 	{
 		// create separate script objects for table and any triggers
-		Add(tab, tab.Schema, tab.Name, "TAB", null);
+		Add(tab, tab.Schema, tab.Name, "TAB", null, true);
 
 		// script triggers
 		foreach (Trigger trig in tab.Triggers) {
@@ -85,7 +85,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 		}
 
 		// add the table, with triggers as sub-objects
-		Add(tab, tab.Schema, tab.Name, "TAB", triggers);
+		Add(tab, tab.Schema, tab.Name, "TAB", triggers, true);
 	}
 
 	public void AddViews(ViewCollection viewCollection)

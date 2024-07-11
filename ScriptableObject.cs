@@ -32,11 +32,14 @@ internal enum Scriptable
 [System.Diagnostics.DebuggerDisplay("{FullName}")]
 internal sealed class ScriptableObject
 {
-	private static readonly ScriptingOptions ScriptOpts = new() { DriAll = true, Indexes = true };
+	private static readonly ScriptingOptions ScriptOptionsTable = new() { DriAll = true, Indexes = true };
+	private static readonly ScriptingOptions ScriptOptionsNormal = new() { DriAll = true };
 
 	private IScriptable Scriptable { get; }
 
 	private readonly IReadOnlyList<IScriptable>? Subscripts;
+
+	private readonly ScriptingOptions Options;
 
 	private string? Schema { get; }
 
@@ -65,13 +68,14 @@ internal sealed class ScriptableObject
 	/// <summary>
 	/// Constructor for general scriptable objects
 	/// </summary>
-	public ScriptableObject(IScriptable script, string? schema, string name, string extension, IReadOnlyList<IScriptable>? subscripts)
+	public ScriptableObject(IScriptable script, string? schema, string name, string extension, IReadOnlyList<IScriptable>? subscripts, bool tableOptions)
 	{
 		Scriptable = script;
 		Schema = schema;
 		Name = name.Replace('\\', '-');
 		Ext = extension;
 		Subscripts = subscripts;
+		Options = tableOptions ? ScriptOptionsTable : ScriptOptionsNormal;
 	}
 
 	/// <summary>
@@ -84,6 +88,7 @@ internal sealed class ScriptableObject
 		Schema = null;
 		Name = "database settings";
 		Ext = string.Empty;
+		Options = ScriptOptionsNormal;
 	}
 
 	/// <summary>
@@ -92,7 +97,7 @@ internal sealed class ScriptableObject
 	public IReadOnlyList<string> Script()
 	{
 		// main script
-		var main = Scriptable.Script(ScriptOpts);
+		var main = Scriptable.Script(Options);
 
 		var additional = Subscripts == null ? 0 : Subscripts.Count * 4;
 		var result = new List<string>(main.Count + additional);
@@ -111,7 +116,7 @@ internal sealed class ScriptableObject
 			result.Add(string.Empty);
 
 			foreach (var sub in Subscripts) {
-				var subcol = sub.Script(ScriptOpts);
+				var subcol = sub.Script(ScriptOptionsNormal);
 				foreach (var s in subcol) {
 					if (!string.IsNullOrWhiteSpace(s)) {
 						result.Add(s);
