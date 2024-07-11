@@ -96,7 +96,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 			if (!v.IsSystemObject) {
 				UpdateCounters();
 				ThreadsafeWrite.Write($"Enumerating view {v.Name}");
-				Add(v, v.Schema, v.Name, "VIW");
+				Add(v, v.Schema, v.Name, "VIW", null, true);
 			}
 		}
 	}

@@ -88,6 +88,8 @@ internal sealed class ScriptableObject
 		}
 	}
 
+	public override string ToString() => FullName;
+
 	/// <summary>
 	/// Constructor for general scriptable objects
 	/// </summary>
