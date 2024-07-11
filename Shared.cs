@@ -45,6 +45,10 @@ internal static class Shared
 	{
 		ScriptOptionsFull.WithDependencies = true;
 		ScriptOptionsNormal.WithDependencies = true;
+
+		// dependents may have errors, and we don't want to stop
+		ScriptOptionsFull.ContinueScriptingOnError = true;
+		ScriptOptionsNormal.ContinueScriptingOnError = true;
 	}
 
 	/// <summary>

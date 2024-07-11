@@ -127,7 +127,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 			if (!s.IsSystemObject) {
 				UpdateCounters();
 				ThreadsafeWrite.Write($"Enumerating schema {s.Name}");
-				Add(s, null, s.Name, "SCH");
+				Add(s, null, s.Name, "SCH", Shared.ScriptOptionsMinimal);
 			}
 		}
 	}
