@@ -85,7 +85,7 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 	{
 		cancellationToken.Token.ThrowIfCancellationRequested();
 
-		ThreadsafeWrite.Write($"Scripting {wrappedObject.Name} ({Shared.QueueCounter.Value} of {Shared.MaxCounter.Value} remaining)");
+		ThreadsafeWrite.Write($"Scripting {wrappedObject.FullName} ({Shared.QueueCounter.Value} of {Shared.MaxCounter.Value} remaining)");
 
 		var filename = $"{config.OutputDirectory}{wrappedObject.FullName}";
 
