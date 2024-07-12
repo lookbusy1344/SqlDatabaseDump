@@ -130,8 +130,10 @@ internal static class Program
 		var dir = pico.GetParamOpt("-o", "--dir") ?? Environment.GetEnvironmentVariable("DB_DIR");
 		var maxParallel = ParseOrDefault(pico.GetParamOpt("-p", "--parallel"), DefaultMaxParallel);
 
+		var allExtras = pico.Contains("-a", "--all");
 		var extendedProperties = pico.Contains("-e", "--extended-properties");
 		var withDependencies = pico.Contains("-w", "--with-dependencies");
+
 		var singleThread = pico.Contains("-s", "--single-thread");
 		var replace = pico.Contains("-r", "--replace");
 		var skipErrors = pico.Contains("-k", "--skip-errors");
@@ -147,7 +149,7 @@ internal static class Program
 		dir = DumpDb.EnsurePathExists(dir);
 
 		return new Config(instance, database, dir, maxParallel,
-			singleThread, replace, skipErrors, extendedProperties, withDependencies);
+			singleThread, replace, skipErrors, extendedProperties || allExtras, withDependencies || allExtras);
 	}
 
 	private static void WriteAnyErrors(Config config)
@@ -185,6 +187,8 @@ internal static class Program
 		Options:
 		  -e, --extended-properties  Include extended properties
 		  -w, --with-dependencies    Include dependencies
+		  -a, --all                  Include all extras (extended properties and dependencies)
+
 		  -r, --replace              Replace existing files (default is to fail if file exists)
 		  -s, --single-thread        Single thread processing
 		  -p, --parallel <n>         Maximum parallel tasks 1..16 (default is 8)
