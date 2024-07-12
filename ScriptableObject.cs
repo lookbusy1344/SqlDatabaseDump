@@ -29,7 +29,7 @@ internal enum Scriptable
 /// <summary>
 /// A wrapper class for database objects to allow polymorphic processing
 /// </summary>
-[System.Diagnostics.DebuggerDisplay("{FullName}")]
+[System.Diagnostics.DebuggerDisplay("{FullName,nq}")]
 internal sealed class ScriptableObject
 {
 	private IScriptable Scriptable { get; }
@@ -94,12 +94,9 @@ internal sealed class ScriptableObject
 	/// </summary>
 	public IReadOnlyList<string> Script()
 	{
-		// main script
 		var main = Scriptable.Script(Options);
 
-		//var additional = Subscripts == null ? 0 : Subscripts.Count * 4;
 		var result = new List<string>(main.Count);
-
 		foreach (var s in main) {
 			if (!string.IsNullOrWhiteSpace(s)) {
 				result.Add(s);
@@ -107,23 +104,6 @@ internal sealed class ScriptableObject
 				result.Add(string.Empty);
 			}
 		}
-
-		// sub-scripts
-		//if (Subscripts?.Count > 0) {
-		//	result.Add("-- ============================ Additional sub-objects ============================");
-		//	result.Add(string.Empty);
-
-		//	foreach (var sub in Subscripts) {
-		//		var subcol = sub.Script(ScriptOptionsNormal);
-		//		foreach (var s in subcol) {
-		//			if (!string.IsNullOrWhiteSpace(s)) {
-		//				result.Add(s);
-		//				result.Add("GO");
-		//				result.Add(string.Empty);
-		//			}
-		//		}
-		//	}
-		//}
 
 		return result;
 	}
