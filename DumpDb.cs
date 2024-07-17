@@ -96,19 +96,23 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 				throw new FileExistsException($"File already exists: {filename}", filename);
 			}
 
-			var sc = wrappedObject.Script(); // this will throw if access is denied
+			var lines = wrappedObject.Script(); // this will throw if access is denied
 
-			if (sc.Count == 0) {
-				return; // nothing to write
+			using var writer = new StreamWriter(filename);
+			var hasContent = false;
+
+			foreach (var s in lines) {
+				writer.WriteLine(s);
+				hasContent = true;
 			}
 
-			using var wr = new StreamWriter(filename);
-
-			foreach (var s in sc) {
-				wr.WriteLine(s);
+			if (!hasContent) {
+				// no content, so write a placeholder
+				writer.WriteLine("-- No content");
+				ThreadsafeWrite.Write($"No content in {wrappedObject.FullName}");
 			}
 
-			wr.Close();
+			writer.Close();
 			_ = Shared.WrittenCounter.Increment();  // file has been written
 		}
 		finally {

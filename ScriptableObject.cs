@@ -92,19 +92,16 @@ internal sealed class ScriptableObject
 	/// <summary>
 	/// Script the object, and any nested sub-scripts
 	/// </summary>
-	public IReadOnlyList<string> Script()
+	public IEnumerable<string> Script()
 	{
 		var main = Scriptable.Script(Options);
 
-		var result = new List<string>(main.Count);
 		foreach (var s in main) {
 			if (!string.IsNullOrWhiteSpace(s)) {
-				result.Add(s);
-				result.Add("GO");
-				result.Add(string.Empty);
+				yield return s;
+				yield return "GO";
+				yield return string.Empty;
 			}
 		}
-
-		return result;
 	}
 }
