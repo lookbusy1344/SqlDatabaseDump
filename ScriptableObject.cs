@@ -44,21 +44,10 @@ internal sealed class ScriptableObject
 
 	public string Name { get; }
 
-	public string FullName
-	{
-		get
-		{
-			if (OverrideFilename != null) {
-				return OverrideFilename;                // explicit overridden filename
-			} else {
-				if (Schema != null) {
-					return $"{Schema}.{Name}.{Ext}";    // filename including schema
-				} else {
-					return $"{Name}.{Ext}";             // filename without a schema
-				}
-			}
-		}
-	}
+	/// <summary>
+	/// Override the full name, or [schema.]name.ext
+	/// </summary>
+	public string FullName => OverrideFilename ?? $"{Schema}.{Name}.{Ext}".TrimStart('.');
 
 	public override string ToString() => FullName;
 
