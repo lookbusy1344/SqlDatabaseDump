@@ -34,8 +34,6 @@ internal sealed class ScriptableObject
 {
 	private IScriptable Scriptable { get; }
 
-	//private readonly IReadOnlyList<IScriptable>? Subscripts;
-
 	private readonly ScriptingOptions Options;
 
 	private string? Schema { get; }
