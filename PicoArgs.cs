@@ -3,7 +3,7 @@ namespace PicoArgs_dotnet;
 /*  PICOARGS_DOTNET - a tiny command line argument parser for .NET
     https://github.com/lookbusy1344/PicoArgs-dotnet
 
-    Version 2.0.0 - 30 Aug 2024
+    Version 2.0.1 - 04 Oct 2024
 
     Example usage:
 
@@ -13,7 +13,7 @@ namespace PicoArgs_dotnet;
 	string? patternOpt = pico.GetParamOpt("-t", "--pattern");  // optional parameter
 	string pattern = pico.GetParamOpt("-t", "--pattern") ?? "*.txt";  // optional parameter with default
 	string requirePath = pico.GetParam("-p", "--path");  // mandatory parameter, throws if not present
-	string[] files = pico.GetMultipleParams("-f", "--file");  // multiple parameters returned in string[]
+	string[] files = pico.GetMultipleParams("-f", "--file").ToArray();  // yield multiple parameters, converting to an array
 	string command = pico.GetCommand();  // first parameter, throws if not present
 	string? commandOpt = pico.GetCommandOpt();  // first parameter, null if not present
 
@@ -68,24 +68,21 @@ public class PicoArgs(IEnumerable<string> args, bool recogniseEquals = true)
 
 	/// <summary>
 	/// Get multiple parameters from the command line, or empty array if not present
-	/// eg -a value1 -a value2 will return ["value1", "value2"]
+	/// eg -a value1 -a value2 will yield ["value1", "value2"]
 	/// </summary>
-	public string[] GetMultipleParams(params string[] options)
+	public IEnumerable<string> GetMultipleParams(params string[] options)
 	{
 		ValidatePossibleParams(options);
 		CheckFinished();
 
-		var result = new List<string>();
 		while (true) {
 			var s = GetParamInternal(options);  // Internal call, because we have already validated the options
 			if (s == null) {
 				break;   // nothing else found, break out of loop
 			}
 
-			result.Add(s);
+			yield return s;
 		}
-
-		return [.. result];
 	}
 
 	/// <summary>
