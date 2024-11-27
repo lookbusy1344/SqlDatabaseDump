@@ -37,7 +37,7 @@ internal static class Program
 		var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
 		using var cancellationToken = new CancellationTokenSource();
-		var types = Enum.GetValues(typeof(Scriptable)).Cast<Scriptable>();
+		var types = Enum.GetValues<Scriptable>();
 
 		if (config.SingleThread || config.MaxParallel == 1) {
 			// run in sequence
