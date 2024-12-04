@@ -3,7 +3,7 @@ namespace PicoArgs_dotnet;
 /*  PICOARGS_DOTNET - a tiny command line argument parser for .NET
     https://github.com/lookbusy1344/PicoArgs-dotnet
 
-    Version 3.0.0 - 27 Nov 2024
+    Version 3.0.1 - 04 Dec 2024
 
     Example usage:
 
@@ -13,7 +13,7 @@ namespace PicoArgs_dotnet;
 	string? patternOpt = pico.GetParamOpt("-t", "--pattern");  // optional parameter
 	string pattern = pico.GetParamOpt("-t", "--pattern") ?? "*.txt";  // optional parameter with default
 	string requirePath = pico.GetParam("-p", "--path");  // mandatory parameter, throws if not present
-	string[] files = pico.GetMultipleParams("-f", "--file").ToArray();  // yield multiple parameters, converting to an array
+	IReadOnlyList<string> files = pico.GetMultipleParams("-f", "--file");  // get multiple parameters eg -f file1 -f file2
 	string command = pico.GetCommand();  // first parameter, throws if not present
 	string? commandOpt = pico.GetCommandOpt();  // first parameter, null if not present
 
@@ -38,9 +38,8 @@ public class PicoArgs(IEnumerable<string> args, bool recogniseEquals = true)
 	/// <summary>
 	/// Get a boolean value from the command line, returns TRUE if found
 	/// </summary>
-	public bool Contains(params IEnumerable<string> options)
+	public bool Contains(params ReadOnlySpan<string> options)
 	{
-		ArgumentNullException.ThrowIfNull(options);
 		ValidatePossibleParams(options);
 		CheckFinished();
 
@@ -54,7 +53,7 @@ public class PicoArgs(IEnumerable<string> args, bool recogniseEquals = true)
 			if (index >= 0) {
 				// if this argument has a value, throw eg "--verbose=true" when we just expected "--verbose"
 				if (args[index].Value != null) {
-					throw new PicoArgsException(80, $"Unexpected value for \"{string.Join(", ", options)}\"");
+					throw new PicoArgsException(80, $"Unexpected value for \"{string.Join(", ", options.ToArray())}\"");
 				}
 
 				// found switch so consume it and return
@@ -68,44 +67,39 @@ public class PicoArgs(IEnumerable<string> args, bool recogniseEquals = true)
 	}
 
 	/// <summary>
-	/// Get multiple parameters from the command line, or empty array if not present
+	/// Get multiple parameters from the command line, or empty list if not present
 	/// eg -a value1 -a value2 will yield ["value1", "value2"]
 	/// </summary>
-	public IEnumerable<string> GetMultipleParams(params IEnumerable<string> options)
+	public IReadOnlyList<string> GetMultipleParams(params ReadOnlySpan<string> options)
 	{
-		ArgumentNullException.ThrowIfNull(options);
 		ValidatePossibleParams(options);
 		CheckFinished();
 
-		return InternalGetMultipleParams();
-
-		// Inner function to avoid RCS1227, need to validate the params before returning IEnumerable
-		IEnumerable<string> InternalGetMultipleParams()
-		{
-			while (true) {
-				var s = GetParamInternal(options);  // Internal call, because we have already validated the options
-				if (s == null) {
-					break;   // nothing else found, break out of loop
-				}
-
-				yield return s;
+		var result = new List<string>(4);
+		while (true) {
+			var s = GetParamInternal(options);  // Internal call, because we have already validated the options
+			if (s == null) {
+				break;   // nothing else found, break out of loop
+			} else {
+				result.Add(s);
 			}
 		}
+
+		return result;
 	}
 
 	/// <summary>
 	/// Get a string value from the command line, throws is not present
 	/// eg -a "value" or --folder "value"
 	/// </summary>
-	public string GetParam(params IEnumerable<string> options) => GetParamOpt(options) ?? throw new PicoArgsException(10, $"Expected value for \"{string.Join(", ", options)}\"");
+	public string GetParam(params ReadOnlySpan<string> options) => GetParamOpt(options) ?? throw new PicoArgsException(10, $"Expected value for \"{string.Join(", ", options.ToArray())}\"");
 
 	/// <summary>
 	/// Get a string value from the command line, or null if not present
 	/// eg -a "value" or --folder "value"
 	/// </summary>
-	public string? GetParamOpt(params IEnumerable<string> options)
+	public string? GetParamOpt(params ReadOnlySpan<string> options)
 	{
-		ArgumentNullException.ThrowIfNull(options);
 		ValidatePossibleParams(options);
 		CheckFinished();
 
@@ -115,15 +109,20 @@ public class PicoArgs(IEnumerable<string> args, bool recogniseEquals = true)
 	/// <summary>
 	/// Internal version of GetParamOpt, which does not check for valid options
 	/// </summary>
-	private string? GetParamInternal(IEnumerable<string> options)
+	private string? GetParamInternal(ReadOnlySpan<string> options)
 	{
-		if (args.Count == 0) {
-			return null;
+		// does args contain any of the specified options? Can't use a lambda because of ref struct
+		var index = -1;
+		for (var i = 0; i < args.Count; ++i) {
+			if (options.Contains(args[i].Key)) {
+				// options contains this key, so we have a match. Record the index and break
+				index = i;
+				break;
+			}
 		}
 
-		// do we have this switch on command line?
-		var index = args.FindIndex(a => options.Contains(a.Key));
 		if (index == -1) {
+			// not found
 			return null;
 		}
 
@@ -215,13 +214,13 @@ public class PicoArgs(IEnumerable<string> args, bool recogniseEquals = true)
 	/// <summary>
 	/// Check options are valid for Contains() or GetParam(), eg -a or --action, but not -aa (already expanded) or ---action or --a
 	/// </summary>
-	private static void ValidatePossibleParams(IEnumerable<string> options)
+	private static void ValidatePossibleParams(ReadOnlySpan<string> options)
 	{
-		var empty = true;
+		if (options.IsEmpty) {
+			throw new ArgumentException("Must specify at least one option", nameof(options));
+		}
 
 		foreach (var o in options) {
-			empty = false;
-
 			if (o.Length == 1 || !o.StartsWith('-')) {
 				throw new ArgumentException($"Options must start with a dash and be longer than 1 character: {o}", nameof(options));
 			}
@@ -238,10 +237,6 @@ public class PicoArgs(IEnumerable<string> args, bool recogniseEquals = true)
 					throw new ArgumentException($"Long options must be 2 characters or more: {o}", nameof(options));
 				}
 			}
-		}
-
-		if (empty) {
-			throw new ArgumentException("Must specify at least one option", nameof(options));
 		}
 	}
 
