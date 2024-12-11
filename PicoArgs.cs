@@ -3,7 +3,7 @@ namespace PicoArgs_dotnet;
 /*  PICOARGS_DOTNET - a tiny command line argument parser for .NET
     https://github.com/lookbusy1344/PicoArgs-dotnet
 
-    Version 3.0.2 - 06 Dec 2024
+    Version 3.0.3 - 10 Dec 2024
 
     Example usage:
 
@@ -277,12 +277,15 @@ public class PicoArgs(IEnumerable<string> args, bool recogniseEquals = true)
 
 	/// <summary>
 	/// Check if combined switches eg -abc. Returns the number of combined switches eg 3. This always respects '=' because its handled elsewhere
+	/// Uses a span to avoid allocations
 	/// </summary>
-	private static int CountCombinedSwitches(string arg)
+	private static int CountCombinedSwitches(ReadOnlySpan<char> arg)
 	{
-		if (arg.Length > 2 && arg.StartsWith('-')) {
+		var equalsPos = arg.IndexOf('=');
+
+		if (arg.Length > 2 && equalsPos > -1 && arg.StartsWith('-')) {
 			// only consider the part before the equals eg "-abc=value" -> "-abc"
-			arg = arg.Split('=', 2)[0];
+			arg = arg[..equalsPos];
 		}
 
 		if (arg.Length > 2 && arg.StartsWith('-') && arg[1] != '-') {
@@ -298,7 +301,7 @@ public class PicoArgs(IEnumerable<string> args, bool recogniseEquals = true)
 	/// <summary>
 	/// Validate this input param from command line. Invalid is ---something or --x. Valid options are -a or -ab or --action
 	/// </summary>
-	private static void ValidateInputParam(string arg)
+	private static void ValidateInputParam(ReadOnlySpan<char> arg)
 	{
 		if (arg == "-") {
 			// a single dash is not valid
