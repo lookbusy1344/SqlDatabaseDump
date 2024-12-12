@@ -1,6 +1,6 @@
 # SqlDatabaseDump
 
-Command line utility to dump SQL Server database structure to files. Built with .NET 8. Multi-threading by default.
+Command line utility to dump SQL Server database structure to files. Built with .NET 9. Multi-threading by default.
 
 ## Building
 
