@@ -3,7 +3,7 @@ namespace PicoArgs_dotnet;
 /*  PICOARGS_DOTNET - a tiny command line argument parser for .NET
     https://github.com/lookbusy1344/PicoArgs-dotnet
 
-    Version 3.0.3 - 10 Dec 2024
+    Version 3.1.0 - 13 Dec 2024
 
     Example usage:
 
@@ -249,29 +249,52 @@ public class PicoArgs(IEnumerable<string> args, bool recogniseEquals = true)
 		foreach (var arg in args) {
 			ValidateInputParam(arg);
 
-			var switches = CountCombinedSwitches(arg);
-			if (switches > 1) {
-				// split combined switches into individual switches eg "-abc" -> "-a" "-b" "-c"
+			var countSwitches = CountCombinedSwitches(arg);
 
-				if (arg.Contains('=')) {
-					// combined switches, with equals eg "-abc=code"
-					// first process all but the last, eg -a -b but not -c=code
-					for (var c = 1; c < switches; ++c) {
-						yield return KeyValue.Build($"-{arg[c]}", false);
-					}
+			switch (countSwitches) {
+				case 0:
+					// not a switch, just a value, eg "action". Never recognized an equals
+					yield return KeyValue.Build(arg, false);
+					break;
 
-					// finally yield the final param with equals eg "-c=code" or "-c='code'"
-					yield return KeyValue.Build($"-{arg[switches..]}", recogniseEquals);
-				} else {
-					// multiple switches, no equals eg "-abc"
-					foreach (var c in arg[1..]) {
-						yield return KeyValue.Build($"-{c}", false);
-					}
-				}
-			} else {
-				// just a single item eg "-a" or "--key=value" or "action"
-				yield return KeyValue.Build(arg, recogniseEquals);
+				case 1:
+					// just a single item eg "-a" or "--key=value", but not "-abc"
+					yield return KeyValue.Build(arg, recogniseEquals);
+					break;
+
+				default:
+					// combined switches that need separating eg "-abc" or "-abc=code"
+					var splitItems = arg.Contains('=') ?
+						ProcessCombinedSwitchesWithEquals(arg, countSwitches, recogniseEquals) : ProcessCombinedSwitchesNoEquals(arg);
+
+					foreach (var item in splitItems) { yield return item; }
+					break;
 			}
+		}
+	}
+
+	/// <summary>
+	/// Helper when there are multiple switches with equals eg "-abc=code" -> "-a", "-b", "-c=code"
+	/// </summary>
+	private static IEnumerable<KeyValue> ProcessCombinedSwitchesWithEquals(string arg, uint countSwitches, bool recogniseEquals)
+	{
+		// first process all but the last, eg -a -b but not -c=code
+		for (var c = 1; c < countSwitches; ++c) {
+			yield return KeyValue.Build($"-{arg[c]}", false);
+		}
+
+		// finally yield the final param with equals eg "-c=code" or "-c='code'"
+		yield return KeyValue.Build($"-{arg[(int)countSwitches..]}", recogniseEquals);
+	}
+
+	/// <summary>
+	/// Helper when there are multiple switches no equals eg "-abc" -> "-a", "-b", "-c"
+	/// </summary>
+	private static IEnumerable<KeyValue> ProcessCombinedSwitchesNoEquals(string arg)
+	{
+		// multiple switches, no equals eg "-abc"
+		foreach (var c in arg[1..]) {
+			yield return KeyValue.Build($"-{c}", false);
 		}
 	}
 
@@ -279,22 +302,26 @@ public class PicoArgs(IEnumerable<string> args, bool recogniseEquals = true)
 	/// Check if combined switches eg -abc. Returns the number of combined switches eg 3. This always respects '=' because its handled elsewhere
 	/// Uses a span to avoid allocations
 	/// </summary>
-	private static int CountCombinedSwitches(ReadOnlySpan<char> arg)
+	private static uint CountCombinedSwitches(ReadOnlySpan<char> arg)
 	{
+		// ensure this is a switch
+		if (!arg.StartsWith('-')) { return 0u; }
+
+		// otherwise, we have a switch eg "-a", "-abc" or "-abc=code" or "--print"
 		var equalsPos = arg.IndexOf('=');
 
-		if (arg.Length > 2 && equalsPos > -1 && arg.StartsWith('-')) {
+		if (arg.Length > 2 && equalsPos > -1) {
 			// only consider the part before the equals eg "-abc=value" -> "-abc"
 			arg = arg[..equalsPos];
 		}
 
-		if (arg.Length > 2 && arg.StartsWith('-') && arg[1] != '-') {
+		if (arg.Length > 2 && arg[1] != '-') {
 			// if it starts with a dash, and is longer than 2 characters, and the second character is not a dash
 			// we have length-1 items eg "-abc" has 3 switches
-			return arg.Length - 1;
+			return (uint)arg.Length - 1u;
 		} else {
 			// just a standard single-switch
-			return 1;
+			return 1u;
 		}
 	}
 
@@ -344,13 +371,22 @@ public sealed class PicoArgsDisposable(IEnumerable<string> args, bool recogniseE
 /// </summary>
 public readonly record struct KeyValue(string Key, string? Value)
 {
-	public static KeyValue Build(string arg, bool recogniseEquals)
+	public KeyValue(ReadOnlySpan<char> key, ReadOnlySpan<char> value) : this(key.ToString(), value.IsEmpty ? null : value.ToString()) { }
+
+	public KeyValue(ReadOnlySpan<char> key) : this(key.ToString(), null) { }
+
+	/// <summary>
+	/// Build a KeyValue from a string, optionally recognising an equals sign and quotes eg --key=value or --key="value"
+	/// </summary>
+	public static KeyValue Build(ReadOnlySpan<char> arg, bool recogniseEquals)
 	{
-		ArgumentNullException.ThrowIfNull(arg);
+		if (arg.IsEmpty) {
+			throw new ArgumentException("Cannot build KeyValue from empty string", nameof(arg));
+		}
 
 		// if arg does not start with a dash, this cannot be a key+value eg --key=value vs key=value
 		if (!recogniseEquals || !arg.StartsWith('-')) {
-			return new KeyValue(arg, null);
+			return new KeyValue(arg);
 		}
 
 		// locate positions of quotes and equals
@@ -358,24 +394,26 @@ public readonly record struct KeyValue(string Key, string? Value)
 		var doubleQuote = IndexOf(arg, '\"') ?? int.MaxValue;
 		var eq = IndexOf(arg, '=');
 
-		if (eq < singleQuote && eq < doubleQuote) {
+		if (eq.HasValue && eq < singleQuote && eq < doubleQuote) {
 			// if the equals is before the quotes, then split on the equals
-			var parts = arg.Split('=', 2);
-			return new KeyValue(parts[0], TrimQuote(parts[1]));
+			var key = arg[..eq.Value]; // everything before the equals
+			var value = arg[(eq.Value + 1)..]; // everything after the equals, might include quotes
+
+			return new KeyValue(key, TrimQuote(value));
 		} else {
-			return new KeyValue(arg, null);
+			return new KeyValue(arg);
 		}
 	}
 
 	/// <summary>
 	/// Index of a char in a string, or null if not found
 	/// </summary>
-	private static int? IndexOf(string str, char chr) => str.IndexOf(chr) is int pos && pos >= 0 ? pos : null;
+	private static int? IndexOf(ReadOnlySpan<char> str, char chr) => str.IndexOf(chr) is int pos && pos >= 0 ? pos : null;
 
 	/// <summary>
-	/// If the string starts and ends with the same quote, remove them eg "hello world" -> hello world
+	/// If the span starts and ends with the same quote, remove them eg "hello world" -> hello world
 	/// </summary>
-	private static string TrimQuote(string str) =>
+	private static ReadOnlySpan<char> TrimQuote(ReadOnlySpan<char> str) =>
 		(str.Length > 1 && (str[0] is '\'' or '\"') && str[^1] == str[0]) ? str[1..^1] : str;
 
 	public override string ToString() => Value == null ? Key : $"{Key}={Value}";
