@@ -3,7 +3,7 @@ namespace PicoArgs_dotnet;
 /*  PICOARGS_DOTNET - a tiny command line argument parser for .NET
     https://github.com/lookbusy1344/PicoArgs-dotnet
 
-    Version 3.1.0 - 13 Dec 2024
+    Version 3.1.1 - 14 Dec 2024
 
     Example usage:
 
@@ -371,22 +371,16 @@ public sealed class PicoArgsDisposable(IEnumerable<string> args, bool recogniseE
 /// </summary>
 public readonly record struct KeyValue(string Key, string? Value)
 {
-	public KeyValue(ReadOnlySpan<char> key, ReadOnlySpan<char> value) : this(key.ToString(), value.IsEmpty ? null : value.ToString()) { }
-
-	public KeyValue(ReadOnlySpan<char> key) : this(key.ToString(), null) { }
-
 	/// <summary>
 	/// Build a KeyValue from a string, optionally recognising an equals sign and quotes eg --key=value or --key="value"
 	/// </summary>
-	public static KeyValue Build(ReadOnlySpan<char> arg, bool recogniseEquals)
+	public static KeyValue Build(string arg, bool recogniseEquals)
 	{
-		if (arg.IsEmpty) {
-			throw new ArgumentException("Cannot build KeyValue from empty string", nameof(arg));
-		}
+		ArgumentNullException.ThrowIfNull(arg);
 
 		// if arg does not start with a dash, this cannot be a key+value eg --key=value vs key=value
 		if (!recogniseEquals || !arg.StartsWith('-')) {
-			return new KeyValue(arg);
+			return new KeyValue(arg, null);
 		}
 
 		// locate positions of quotes and equals
@@ -395,20 +389,21 @@ public readonly record struct KeyValue(string Key, string? Value)
 		var eq = IndexOf(arg, '=');
 
 		if (eq.HasValue && eq < singleQuote && eq < doubleQuote) {
-			// if the equals is before the quotes, then split on the equals
-			var key = arg[..eq.Value]; // everything before the equals
-			var value = arg[(eq.Value + 1)..]; // everything after the equals, might include quotes
+			// if the equals is before the quotes, then split on the equals, using spans to avoid allocations before trimming
+			var span = arg.AsSpan();
+			var key = span[..eq.Value]; // everything before the equals
+			var value = span[(eq.Value + 1)..]; // everything after the equals, might include quotes
 
-			return new KeyValue(key, TrimQuote(value));
+			return new KeyValue(key.ToString(), TrimQuote(value).ToString());
 		} else {
-			return new KeyValue(arg);
+			return new KeyValue(arg, null);
 		}
 	}
 
 	/// <summary>
 	/// Index of a char in a string, or null if not found
 	/// </summary>
-	private static int? IndexOf(ReadOnlySpan<char> str, char chr) => str.IndexOf(chr) is int pos && pos >= 0 ? pos : null;
+	private static int? IndexOf(string str, char chr) => str.IndexOf(chr) is int pos && pos >= 0 ? pos : null;
 
 	/// <summary>
 	/// If the span starts and ends with the same quote, remove them eg "hello world" -> hello world
