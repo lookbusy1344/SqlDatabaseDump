@@ -3,7 +3,7 @@ namespace PicoArgs_dotnet;
 /*  PICOARGS_DOTNET - a tiny command line argument parser for .NET
     https://github.com/lookbusy1344/PicoArgs-dotnet
 
-    Version 3.1.1 - 14 Dec 2024
+    Version 3.1.2 - 18 Dec 2024
 
     Example usage:
 
@@ -249,79 +249,30 @@ public class PicoArgs(IEnumerable<string> args, bool recogniseEquals = true)
 		foreach (var arg in args) {
 			ValidateInputParam(arg);
 
-			var countSwitches = CountCombinedSwitches(arg);
-
-			switch (countSwitches) {
-				case 0:
-					// not a switch, just a value, eg "action". Never recognized an equals
-					yield return KeyValue.Build(arg, false);
-					break;
-
-				case 1:
-					// just a single item eg "-a" or "--key=value", but not "-abc"
-					yield return KeyValue.Build(arg, recogniseEquals);
-					break;
-
-				default:
-					// combined switches that need separating eg "-abc" or "-abc=code"
-					var splitItems = arg.Contains('=') ?
-						ProcessCombinedSwitchesWithEquals(arg, countSwitches, recogniseEquals) : ProcessCombinedSwitchesNoEquals(arg);
-
-					foreach (var item in splitItems) { yield return item; }
-					break;
+			if (!arg.StartsWith('-')) {
+				// not a switch
+				yield return KeyValue.Build(arg, false);
+				continue;
 			}
-		}
-	}
 
-	/// <summary>
-	/// Helper when there are multiple switches with equals eg "-abc=code" -> "-a", "-b", "-c=code"
-	/// </summary>
-	private static IEnumerable<KeyValue> ProcessCombinedSwitchesWithEquals(string arg, uint countSwitches, bool recogniseEquals)
-	{
-		// first process all but the last, eg -a -b but not -c=code
-		for (var c = 1; c < countSwitches; ++c) {
-			yield return KeyValue.Build($"-{arg[c]}", false);
-		}
+			var equalsPos = arg.IndexOf('=');
+			var switchEnd = equalsPos > -1 ? equalsPos : arg.Length;
 
-		// finally yield the final param with equals eg "-c=code" or "-c='code'"
-		yield return KeyValue.Build($"-{arg[(int)countSwitches..]}", recogniseEquals);
-	}
-
-	/// <summary>
-	/// Helper when there are multiple switches no equals eg "-abc" -> "-a", "-b", "-c"
-	/// </summary>
-	private static IEnumerable<KeyValue> ProcessCombinedSwitchesNoEquals(string arg)
-	{
-		// multiple switches, no equals eg "-abc"
-		foreach (var c in arg[1..]) {
-			yield return KeyValue.Build($"-{c}", false);
-		}
-	}
-
-	/// <summary>
-	/// Check if combined switches eg -abc. Returns the number of combined switches eg 3. This always respects '=' because its handled elsewhere
-	/// Uses a span to avoid allocations
-	/// </summary>
-	private static uint CountCombinedSwitches(ReadOnlySpan<char> arg)
-	{
-		// ensure this is a switch
-		if (!arg.StartsWith('-')) { return 0u; }
-
-		// otherwise, we have a switch eg "-a", "-abc" or "-abc=code" or "--print"
-		var equalsPos = arg.IndexOf('=');
-
-		if (arg.Length > 2 && equalsPos > -1) {
-			// only consider the part before the equals eg "-abc=value" -> "-abc"
-			arg = arg[..equalsPos];
-		}
-
-		if (arg.Length > 2 && arg[1] != '-') {
-			// if it starts with a dash, and is longer than 2 characters, and the second character is not a dash
-			// we have length-1 items eg "-abc" has 3 switches
-			return (uint)arg.Length - 1u;
-		} else {
-			// just a standard single-switch
-			return 1u;
+			if (switchEnd == 2 || arg[1] == '-') {
+				// single switch or long switch, eg -a or --action
+				yield return KeyValue.Build(arg, recogniseEquals);
+			} else {
+				// combined switches, eg -abc or -abc=code
+				for (var i = 1; i < switchEnd; i++) {
+					if (equalsPos > -1 && i == switchEnd - 1) {
+						// last item in the combined switches, and there is a value eg -abc=code -> -c=code
+						yield return KeyValue.Build($"-{arg[i..]}", recogniseEquals);
+					} else {
+						// normal switch eg -abc=code -> -a, -b
+						yield return KeyValue.Build($"-{arg[i]}", false);
+					}
+				}
+			}
 		}
 	}
 
