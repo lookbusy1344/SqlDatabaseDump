@@ -3,7 +3,7 @@ namespace PicoArgs_dotnet;
 /*  PICOARGS_DOTNET - a tiny command line argument parser for .NET
     https://github.com/lookbusy1344/PicoArgs-dotnet
 
-    Version 3.1.2 - 18 Dec 2024
+    Version 3.1.3 - 19 Dec 2024
 
     Example usage:
 
@@ -168,9 +168,9 @@ public class PicoArgs(IEnumerable<string> args, bool recogniseEquals = true)
 			return null;
 		}
 
-		// check for a switch
+		// check for a switch, a single dash '-' or double-dash '--' is ok
 		var cmd = args[0].Key;
-		if (cmd.StartsWith('-')) {
+		if (cmd != "-" && cmd != "--" && cmd.StartsWith('-')) {
 			throw new PicoArgsException(50, $"Expected command not \"{cmd}\"");
 		}
 
@@ -249,8 +249,8 @@ public class PicoArgs(IEnumerable<string> args, bool recogniseEquals = true)
 		foreach (var arg in args) {
 			ValidateInputParam(arg);
 
-			if (!arg.StartsWith('-')) {
-				// not a switch
+			if (arg == "-" || !arg.StartsWith('-')) {
+				// not a switch, or just a single dash
 				yield return KeyValue.Build(arg, false);
 				continue;
 			}
@@ -325,10 +325,8 @@ public readonly record struct KeyValue(string Key, string? Value)
 	/// <summary>
 	/// Build a KeyValue from a string, optionally recognising an equals sign and quotes eg --key=value or --key="value"
 	/// </summary>
-	public static KeyValue Build(string arg, bool recogniseEquals)
+	internal static KeyValue Build(string arg, bool recogniseEquals)
 	{
-		ArgumentNullException.ThrowIfNull(arg);
-
 		// if arg does not start with a dash, this cannot be a key+value eg --key=value vs key=value
 		if (!recogniseEquals || !arg.StartsWith('-')) {
 			return new KeyValue(arg, null);
