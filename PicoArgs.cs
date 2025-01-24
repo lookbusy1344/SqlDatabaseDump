@@ -3,7 +3,7 @@ namespace PicoArgs_dotnet;
 /*  PICOARGS_DOTNET - a tiny command line argument parser for .NET
     https://github.com/lookbusy1344/PicoArgs-dotnet
 
-    Version 3.1.3 - 19 Dec 2024
+    Version 3.2.0 - 24 Jan 2025
 
     Example usage:
 
@@ -13,7 +13,7 @@ namespace PicoArgs_dotnet;
 	string? patternOpt = pico.GetParamOpt("-t", "--pattern");  // optional parameter
 	string pattern = pico.GetParamOpt("-t", "--pattern") ?? "*.txt";  // optional parameter with default
 	string requirePath = pico.GetParam("-p", "--path");  // mandatory parameter, throws if not present
-	IReadOnlyList<string> files = pico.GetMultipleParams("-f", "--file");  // get multiple parameters eg -f file1 -f file2
+	IList<string> files = pico.GetMultipleParams("-f", "--file");  // get multiple parameters eg -f file1 -f file2
 	string command = pico.GetCommand();  // first parameter, throws if not present
 	string? commandOpt = pico.GetCommandOpt();  // first parameter, null if not present
 
@@ -70,7 +70,7 @@ public class PicoArgs(IEnumerable<string> args, bool recogniseEquals = true)
 	/// Get multiple parameters from the command line, or empty list if not present
 	/// eg -a value1 -a value2 will yield ["value1", "value2"]
 	/// </summary>
-	public IReadOnlyList<string> GetMultipleParams(params ReadOnlySpan<string> options)
+	public IList<string> GetMultipleParams(params ReadOnlySpan<string> options)
 	{
 		ValidatePossibleParams(options);
 		CheckFinished();
