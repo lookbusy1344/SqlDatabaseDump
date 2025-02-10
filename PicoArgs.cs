@@ -3,7 +3,7 @@ namespace PicoArgs_dotnet;
 /*  PICOARGS_DOTNET - a tiny command line argument parser for .NET
     https://github.com/lookbusy1344/PicoArgs-dotnet
 
-    Version 3.2.0 - 24 Jan 2025
+    Version 3.2.1 - 10 Feb 2025
 
     Example usage:
 
@@ -80,9 +80,9 @@ public class PicoArgs(IEnumerable<string> args, bool recogniseEquals = true)
 			var s = GetParamInternal(options);  // Internal call, because we have already validated the options
 			if (s == null) {
 				break;   // nothing else found, break out of loop
-			} else {
-				result.Add(s);
 			}
+
+			result.Add(s);
 		}
 
 		return result;
@@ -344,9 +344,9 @@ public readonly record struct KeyValue(string Key, string? Value)
 			var value = span[(eq.Value + 1)..]; // everything after the equals, might include quotes
 
 			return new KeyValue(key.ToString(), TrimQuote(value).ToString());
-		} else {
-			return new KeyValue(arg, null);
 		}
+
+		return new KeyValue(arg, null);
 	}
 
 	/// <summary>
