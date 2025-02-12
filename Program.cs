@@ -1,7 +1,7 @@
-﻿using PicoArgs_dotnet;
-using System;
+﻿namespace SqlDatabaseDump;
 
-namespace SqlDatabaseDump;
+using System;
+using PicoArgs_dotnet;
 
 // --instance (localdb)\MSSQLLocalDB --db DogTest --dir c:\dev\1
 
@@ -91,9 +91,9 @@ internal static class Program
 			// rethrow either the first inner exception (true error) or the AggregateException as a fallback
 			if (ae.InnerException != null) {
 				throw ae.InnerException;
-			} else {
-				throw;
 			}
+
+			throw;
 		}
 	}
 

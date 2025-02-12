@@ -1,7 +1,7 @@
-﻿using Microsoft.SqlServer.Management.Smo;
-using System.Collections.Concurrent;
+﻿namespace SqlDatabaseDump;
 
-namespace SqlDatabaseDump;
+using System.Collections.Concurrent;
+using Microsoft.SqlServer.Management.Smo;
 
 internal static class Shared
 {

@@ -1,6 +1,6 @@
-using System.Reflection;
-
 namespace GitVersion;
+
+using System.Reflection;
 
 public class VersionInfo
 {
@@ -34,9 +34,9 @@ public class VersionInfo
 
 		if (len == null) {
 			return GitHash;
-		} else {
-			return $"{GitHash[..len.Value]}{(GitModified ? "+" : string.Empty)}";
 		}
+
+		return $"{GitHash[..len.Value]}{(GitModified ? "+" : string.Empty)}";
 	}
 
 	public string GetVersionHash(int? len = null)
@@ -49,9 +49,9 @@ public class VersionInfo
 
 		if (len == null) {
 			return $"v{Version} - {GitHash}";
-		} else {
-			return $"v{Version} - {GitHash[..len.Value]}{(GitModified ? "+" : string.Empty)}";
 		}
+
+		return $"v{Version} - {GitHash[..len.Value]}{(GitModified ? "+" : string.Empty)}";
 	}
 
 	public static VersionInfo Get()

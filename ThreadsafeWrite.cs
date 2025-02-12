@@ -1,7 +1,6 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿namespace SqlDatabaseDump;
 
-namespace SqlDatabaseDump;
+using System;
 
 internal static class ThreadsafeWrite
 {

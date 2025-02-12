@@ -1,6 +1,6 @@
-﻿using Microsoft.SqlServer.Management.Smo;
+﻿namespace SqlDatabaseDump;
 
-namespace SqlDatabaseDump;
+using Microsoft.SqlServer.Management.Smo;
 
 /// <summary>
 /// A polymorphic list of database objects

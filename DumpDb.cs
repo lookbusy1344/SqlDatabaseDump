@@ -1,6 +1,6 @@
-﻿using Microsoft.SqlServer.Management.Smo;
+﻿namespace SqlDatabaseDump;
 
-namespace SqlDatabaseDump;
+using Microsoft.SqlServer.Management.Smo;
 
 internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationTokenSource cancellationToken)
 {

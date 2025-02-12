@@ -1,7 +1,7 @@
-﻿using Microsoft.SqlServer.Management.Smo;
-using System.Collections.Specialized;
+﻿namespace SqlDatabaseDump;
 
-namespace SqlDatabaseDump;
+using System.Collections.Specialized;
+using Microsoft.SqlServer.Management.Smo;
 
 /// <summary>
 /// Types of db objects that can be scripted
