@@ -15,4 +15,14 @@ internal static class ThreadsafeWrite
 			Console.WriteLine(s);
 		}
 	}
+
+	/// <summary>
+	/// Thread safe Console.WriteLine for ReadOnlySpan
+	/// </summary>
+	public static void Write(ReadOnlySpan<char> span)
+	{
+		lock (lockObject) {
+			Console.Out.WriteLine(span);
+		}
+	}
 }
