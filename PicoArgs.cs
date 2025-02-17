@@ -3,7 +3,7 @@ namespace PicoArgs_dotnet;
 /*  PICOARGS_DOTNET - a tiny command line argument parser for .NET
     https://github.com/lookbusy1344/PicoArgs-dotnet
 
-    Version 3.2.1 - 10 Feb 2025
+    Version 3.2.1 - 12 Feb 2025
 
     Example usage:
 
@@ -32,7 +32,7 @@ namespace PicoArgs_dotnet;
 /// </remarks>
 public class PicoArgs(IEnumerable<string> args, bool recogniseEquals = true)
 {
-	private readonly List<KeyValue> args = ProcessItems(args, recogniseEquals).ToList();
+	private readonly List<KeyValue> args = [.. ProcessItems(args, recogniseEquals)];
 	private bool finished;
 
 	/// <summary>
