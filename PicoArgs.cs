@@ -3,7 +3,7 @@ namespace PicoArgs_dotnet;
 /*  PICOARGS_DOTNET - a tiny command line argument parser for .NET
     https://github.com/lookbusy1344/PicoArgs-dotnet
 
-    Version 3.2.1 - 12 Feb 2025
+    Version 3.2.2 - 06 Mar 2025
 
     Example usage:
 
@@ -32,7 +32,7 @@ namespace PicoArgs_dotnet;
 /// </remarks>
 public class PicoArgs(IEnumerable<string> args, bool recogniseEquals = true)
 {
-	private readonly List<KeyValue> args = [.. ProcessItems(args, recogniseEquals)];
+	private readonly List<KeyValue> argList = [.. ProcessItems(args, recogniseEquals)];
 	private bool finished;
 
 	/// <summary>
@@ -44,20 +44,20 @@ public class PicoArgs(IEnumerable<string> args, bool recogniseEquals = true)
 		CheckFinished();
 
 		// no args left
-		if (args.Count == 0) {
+		if (argList.Count == 0) {
 			return false;
 		}
 
 		foreach (var o in options) {
-			var index = args.FindIndex(a => a.Key == o);
+			var index = argList.FindIndex(a => a.Key == o);
 			if (index >= 0) {
 				// if this argument has a value, throw eg "--verbose=true" when we just expected "--verbose"
-				if (args[index].Value != null) {
+				if (argList[index].Value != null) {
 					throw new PicoArgsException(80, $"Unexpected value for \"{string.Join(", ", options!)}\"");
 				}
 
 				// found switch so consume it and return
-				args.RemoveAt(index);
+				argList.RemoveAt(index);
 				return true;
 			}
 		}
@@ -113,8 +113,8 @@ public class PicoArgs(IEnumerable<string> args, bool recogniseEquals = true)
 	{
 		// does args contain any of the specified options? Can't use a lambda because of ref struct
 		var index = -1;
-		for (var i = 0; i < args.Count; ++i) {
-			if (options.Contains(args[i].Key)) {
+		for (var i = 0; i < argList.Count; ++i) {
+			if (options.Contains(argList[i].Key)) {
 				// options contains this key, so we have a match. Record the index and break
 				index = i;
 				break;
@@ -127,27 +127,27 @@ public class PicoArgs(IEnumerable<string> args, bool recogniseEquals = true)
 		}
 
 		// check if this key has an identified value
-		var item = args[index];
+		var item = argList[index];
 		if (item.Value != null) {
-			args.RemoveAt(index);
+			argList.RemoveAt(index);
 			return item.Value;
 		}
 
 		// otherwise, there is no identified value, so we need to look at the next parameter
 
 		// is it the last parameter?
-		if (index == args.Count - 1) {
+		if (index == argList.Count - 1) {
 			throw new PicoArgsException(20, $"Expected value after \"{item.Key}\"");
 		}
 
 		// grab and check the next parameter
-		var secondItem = args[index + 1];
+		var secondItem = argList[index + 1];
 		if (secondItem.Value != null) {
 			throw new PicoArgsException(30, $"Cannot identify value for param \"{item.Key}\", followed by \"{secondItem.Key}\" and \"{secondItem.Value}\"");
 		}
 
 		// consume the switch and the separate value
-		args.RemoveRange(index, 2);
+		argList.RemoveRange(index, 2);
 
 		// return the value
 		return secondItem.Key;
@@ -164,38 +164,38 @@ public class PicoArgs(IEnumerable<string> args, bool recogniseEquals = true)
 	public string? GetCommandOpt()
 	{
 		CheckFinished();
-		if (args.Count == 0) {
+		if (argList.Count == 0) {
 			return null;
 		}
 
 		// check for a switch, a single dash '-' or double-dash '--' is ok
-		var cmd = args[0].Key;
+		var cmd = argList[0].Key;
 		if (cmd != "-" && cmd != "--" && cmd.StartsWith('-')) {
 			throw new PicoArgsException(50, $"Expected command not \"{cmd}\"");
 		}
 
 		// consume the command, and return it
-		args.RemoveAt(0);
+		argList.RemoveAt(0);
 		return cmd;
 	}
 
 	/// <summary>
 	/// Return any unused command line parameters
 	/// </summary>
-	public IReadOnlyList<KeyValue> UnconsumedArgs => args;
+	public IReadOnlyList<KeyValue> UnconsumedArgs => argList;
 
 	/// <summary>
 	/// Return true if there are no unused command line parameters
 	/// </summary>
-	public bool IsEmpty => args.Count == 0;
+	public bool IsEmpty => argList.Count == 0;
 
 	/// <summary>
 	/// Throw an exception if there are any unused command line parameters
 	/// </summary>
 	public void Finished()
 	{
-		if (args.Count > 0) {
-			throw new PicoArgsException(60, $"Unrecognised parameter(s): {string.Join(", ", args)}");
+		if (argList.Count > 0) {
+			throw new PicoArgsException(60, $"Unrecognised parameter(s): {string.Join(", ", argList)}");
 		}
 
 		finished = true;
