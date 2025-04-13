@@ -28,7 +28,7 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.Identity" Version="1.13.2" />
-    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.7.0" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.8.0" />
     <PackageReference Include="Microsoft.SqlServer.SqlManagementObjects" Version="172.64.0" />
     <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.13.61">
       <PrivateAssets>all</PrivateAssets>
@@ -42,8 +42,8 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="System.Formats.Asn1" Version="9.0.3" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.7.0" />
+    <PackageReference Include="System.Formats.Asn1" Version="9.0.4" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.8.0" />
   </ItemGroup>
 
 </Project>
