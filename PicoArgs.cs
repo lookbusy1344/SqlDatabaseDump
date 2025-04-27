@@ -3,7 +3,7 @@ namespace PicoArgs_dotnet;
 /*  PICOARGS_DOTNET - a tiny command line argument parser for .NET
     https://github.com/lookbusy1344/PicoArgs-dotnet
 
-    Version 3.2.2 - 06 Mar 2025
+    Version 3.2.3 - 27 Apr 2025
 
     Example usage:
 
@@ -48,10 +48,15 @@ public class PicoArgs(IEnumerable<string> args, bool recogniseEquals = true)
 			return false;
 		}
 
+		// use HashSet for faster lookups, just one heap allocation
+		var optionsSet = new HashSet<string>(options.Length);
 		foreach (var o in options) {
-			var index = argList.FindIndex(a => a.Key == o);
-			if (index >= 0) {
-				// if this argument has a value, throw eg "--verbose=true" when we just expected "--verbose"
+			_ = optionsSet.Add(o);
+		}
+
+		for (var index = 0; index < argList.Count; ++index) {
+			if (optionsSet.Contains(argList[index].Key)) {
+				// if this argument has a value, throw
 				if (argList[index].Value != null) {
 					throw new PicoArgsException(80, $"Unexpected value for \"{string.Join(", ", options!)}\"");
 				}
