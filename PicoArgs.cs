@@ -3,7 +3,7 @@ namespace PicoArgs_dotnet;
 /*  PICOARGS_DOTNET - a tiny command line argument parser for .NET
     https://github.com/lookbusy1344/PicoArgs-dotnet
 
-    Version 3.3 - 10 Jun 2025
+    Version 3.3.1 - 28 Jun 2025
 
     Example usage:
 
@@ -252,6 +252,10 @@ public class PicoArgs(IEnumerable<string> args, bool recogniseEquals = true)
 	/// </summary>
 	private static IEnumerable<KeyValue> ProcessItems(IEnumerable<string> args, bool recogniseEquals)
 	{
+		if (args is null) {
+			yield break;  // no args, nothing to process
+		}
+
 		foreach (var arg in args) {
 			ValidateInputParam(arg);
 
@@ -333,38 +337,63 @@ public readonly record struct KeyValue(string Key, string? Value)
 	/// </summary>
 	internal static KeyValue Build(string arg, bool recogniseEquals)
 	{
-		// if arg does not start with a dash, this cannot be a key+value eg --key=value vs key=value
+		if (string.IsNullOrEmpty(arg)) {
+			return new(string.Empty, null);
+		}
+
+		// If not recognizing equals or arg doesn't start with dash, return as-is
 		if (!recogniseEquals || !arg.StartsWith('-')) {
-			return new KeyValue(arg, null);
+			return new(arg, null);
 		}
 
-		// locate positions of quotes and equals
-		var singleQuote = IndexOf(arg, '\'') ?? int.MaxValue;
-		var doubleQuote = IndexOf(arg, '\"') ?? int.MaxValue;
-		var eq = IndexOf(arg, '=');
+		var span = arg.AsSpan();
+		var eqIndex = span.IndexOf('=');
 
-		if (eq.HasValue && eq < singleQuote && eq < doubleQuote) {
-			// if the equals is before the quotes, then split on the equals, using spans to avoid allocations before trimming
-			var span = arg.AsSpan();
-			var key = span[..eq.Value]; // everything before the equals
-			var value = span[(eq.Value + 1)..]; // everything after the equals, might include quotes
-
-			return new KeyValue(key.ToString(), TrimQuote(value).ToString());
+		if (eqIndex == -1) {
+			return new(arg, null); // No equals sign found
 		}
 
-		return new KeyValue(arg, null);
+		// Get key and raw value
+		var key = span[..eqIndex].ToString();
+		var valueSpan = span[(eqIndex + 1)..];
+
+		if (valueSpan.IsEmpty) {
+			return new(key, string.Empty); // Empty value after equals sign
+		}
+
+		// Check for quoted values
+		if ((valueSpan[0] == '\'' || valueSpan[0] == '\"') && valueSpan.Length > 1) {
+			var quoteChar = valueSpan[0];
+
+			// Find matching end quote (ignoring escaped quotes)
+			var endQuotePos = -1;
+			for (var i = 1; i < valueSpan.Length; i++) {
+				// Skip escaped quotes
+				if (valueSpan[i] == '\\' && i + 1 < valueSpan.Length && valueSpan[i + 1] == quoteChar) {
+					i++;
+					continue;
+				}
+
+				if (valueSpan[i] == quoteChar) {
+					endQuotePos = i;
+					break;
+				}
+			}
+
+			// Found matching quote
+			if (endQuotePos != -1) {
+				// Extract content inside quotes and unescape any escaped quotes
+				var innerValue = valueSpan[1..endQuotePos].ToString().Replace($"\\{quoteChar}", $"{quoteChar}");
+				return new(key, innerValue);
+			}
+
+			// Unbalanced quotes - treat entire string as value without removing quotes
+			return new(key, valueSpan.ToString());
+		}
+
+		// Regular unquoted value
+		return new(key, valueSpan.ToString());
 	}
-
-	/// <summary>
-	/// Index of a char in a string, or null if not found
-	/// </summary>
-	private static int? IndexOf(string str, char chr) => str.IndexOf(chr) is int pos && pos >= 0 ? pos : null;
-
-	/// <summary>
-	/// If the span starts and ends with the same quote, remove them eg "hello world" -> hello world
-	/// </summary>
-	private static ReadOnlySpan<char> TrimQuote(ReadOnlySpan<char> str) =>
-		(str.Length > 1 && (str[0] is '\'' or '\"') && str[^1] == str[0]) ? str[1..^1] : str;
 
 	public override string ToString() => Value == null ? Key : $"{Key}={Value}";
 }
