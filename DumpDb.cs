@@ -1,5 +1,6 @@
 namespace SqlDatabaseDump;
 
+using Microsoft.SqlServer.Management.Common;
 using Microsoft.SqlServer.Management.Smo;
 
 internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationTokenSource cancellationToken)
@@ -10,7 +11,7 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 
 	public void Run()
 	{
-		var theServer = new Server(config.InstanceName);
+		var theServer = new Server(CreateConnection(config));
 		myDB = theServer.Databases[config.DatabaseName];
 		if (myDB == null) {
 			throw new InvalidOperationException($"Database '{config.DatabaseName}' not found on '{config.InstanceName}'");
@@ -81,13 +82,23 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 		}
 	}
 
+	private static ServerConnection CreateConnection(Config config)
+	{
+		var connection = config.Login is SqlLogin login
+			? new ServerConnection(config.InstanceName, login.User, login.Password)
+			: new ServerConnection(config.InstanceName);
+
+		connection.TrustServerCertificate = config.TrustServerCertificate;
+		return connection;
+	}
+
 	private void WriteObject(ScriptableObject wrappedObject)
 	{
 		cancellationToken.Token.ThrowIfCancellationRequested();
 
 		ThreadsafeWrite.Write($"Scripting {wrappedObject.FullName} ({Shared.QueueCounter.Value} of {Shared.MaxCounter.Value} remaining)");
 
-		var filename = $"{config.OutputDirectory}{wrappedObject.FullName}";
+		var filename = Path.Combine(config.OutputDirectory, wrappedObject.FullName);
 
 		try {
 			if (!config.ReplaceExistingFiles && File.Exists(filename)) {
@@ -123,23 +134,12 @@ internal sealed class DumpDb(Config config, Scriptable scriptType, CancellationT
 
 	private void WritePlaceMarker(ScriptableObject wrappedObject, string content)
 	{
-		var filename = $"{config.OutputDirectory}{wrappedObject.FullName}";
+		var filename = Path.Combine(config.OutputDirectory, wrappedObject.FullName);
 		File.WriteAllText(filename, $"{content} {DateTime.Now}");
 	}
 
 	/// <summary>
-	/// Ensure the path of the given filename exists, and return it with a trailing backslash
+	/// Create the output directory if needed, and return its full path
 	/// </summary>
-	public static string EnsurePathExists(string path)
-	{
-		if (!path.EndsWith('\\')) {
-			path += "\\";
-		}
-
-		var directoryPath = Path.GetDirectoryName(path)
-			?? throw new InvalidOperationException($"Could not determine directory path for '{path}'");
-
-		_ = Directory.CreateDirectory(directoryPath);
-		return directoryPath + "\\";
-	}
+	public static string EnsurePathExists(string path) => Directory.CreateDirectory(Path.GetFullPath(path)).FullName;
 }

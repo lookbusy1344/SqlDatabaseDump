@@ -14,7 +14,7 @@ internal static class Program
 		AppDomain.CurrentDomain.UnhandledException += App_UnhandledException;
 
 		var ver = GitVersion.VersionInfo.Get();
-		Console.WriteLine($"SqlDatabaseDump.exe {ver.GetVersionHash(12)}");
+		Console.WriteLine($"SqlDatabaseDump {ver.GetVersionHash(12)}");
 
 		var config = BuildConfig(args);
 
@@ -129,6 +129,8 @@ internal static class Program
 		var database = pico.GetParamOpt("-d", "--database") ?? Environment.GetEnvironmentVariable("DB_DATABASE");
 		var dir = pico.GetParamOpt("-o", "--dir") ?? Environment.GetEnvironmentVariable("DB_DIR");
 		var maxParallel = ParseOrDefault(pico.GetParamOpt("-p", "--parallel"), DefaultMaxParallel);
+		var user = pico.GetParamOpt("-u", "--user") ?? Environment.GetEnvironmentVariable("DB_USER");
+		var trustServerCertificate = pico.Contains("-t", "--trust-server-certificate");
 
 		var allExtras = pico.Contains("-a", "--all");
 		var extendedProperties = pico.Contains("-e", "--extended-properties");
@@ -147,9 +149,37 @@ internal static class Program
 		}
 
 		dir = DumpDb.EnsurePathExists(dir);
+		var login = string.IsNullOrWhiteSpace(user) ? null : new SqlLogin(user, Environment.GetEnvironmentVariable("DB_PASSWORD") ?? ReadPassword(user));
 
 		return new Config(instance, database, dir, maxParallel,
-			singleThread, replace, skipErrors, extendedProperties || allExtras, withDependencies || allExtras);
+			singleThread, replace, skipErrors, extendedProperties || allExtras, withDependencies || allExtras,
+			login, trustServerCertificate);
+	}
+
+	/// <summary>
+	/// Prompt for a password on the console without echoing it
+	/// </summary>
+	private static string ReadPassword(string user)
+	{
+		Console.Write($"Password for {user}: ");
+		if (Console.IsInputRedirected) {
+			return Console.ReadLine() ?? string.Empty;
+		}
+
+		var password = new System.Text.StringBuilder();
+
+		for (var key = Console.ReadKey(intercept: true); key.Key != ConsoleKey.Enter; key = Console.ReadKey(intercept: true)) {
+			if (key.Key == ConsoleKey.Backspace) {
+				if (password.Length > 0) {
+					_ = password.Remove(password.Length - 1, 1);
+				}
+			} else if (!char.IsControl(key.KeyChar)) {
+				_ = password.Append(key.KeyChar);
+			}
+		}
+
+		Console.WriteLine();
+		return password.ToString();
 	}
 
 	private static void WriteAnyErrors(Config config)
@@ -161,7 +191,7 @@ internal static class Program
 		// sort the concurrent bag
 		IReadOnlyList<string> items = [.. Shared.ErrorObjects.AsEnumerable().Order()];
 
-		var filename = $"{config.OutputDirectory}{config.DatabaseName}-Errors.TXT";
+		var filename = Path.Combine(config.OutputDirectory, $"{config.DatabaseName}-Errors.TXT");
 		using var wr = new StreamWriter(filename);
 
 		wr.WriteLine($"Objects with errors in {config.DatabaseName} {DateTime.Now}:");
@@ -177,12 +207,17 @@ internal static class Program
 	private static int ParseOrDefault(string? value, int defaultValue) => int.TryParse(value, out var result) ? result : defaultValue;
 
 	private const string CommandLineMessage = """
-		Usage: SqlDatabaseDump.exe --instance <instance> --database <db> --dir <dir>
+		Usage: SqlDatabaseDump --instance <instance> --database <db> --dir <dir>
 
 		Required:
 		  -i, --instance <instance>  SQL Server instance to connect to  (or DB_INSTANCE environment variable)
 		  -d, --database <db>        Database to process                (or DB_DATABASE environment variable)
 		  -o, --dir <dir>            Output directory                   (or DB_DIR environment variable)
+
+		Authentication (default is Windows authentication):
+		  -u, --user <login>         SQL Server login                   (or DB_USER environment variable)
+		                             Password from DB_PASSWORD environment variable, or prompted
+		  -t, --trust-server-certificate  Accept a self-signed server certificate
 
 		Options:
 		  -e, --extended-properties  Include extended properties

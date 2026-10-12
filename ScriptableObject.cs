@@ -57,11 +57,16 @@ internal sealed class ScriptableObject
 	public ScriptableObject(IScriptable script, string? schema, string name, string extension, ScriptingOptions options)
 	{
 		Scriptable = script;
-		Schema = schema;
-		Name = name.Replace('\\', '-');
+		Schema = schema is null ? null : SafeFilename(schema);
+		Name = SafeFilename(name);
 		Ext = extension;
 		Options = options;
 	}
+
+	/// <summary>
+	/// Replace path separators, so object names cannot escape the output directory on any platform
+	/// </summary>
+	private static string SafeFilename(string name) => name.Replace('\\', '-').Replace('/', '-');
 
 	/// <summary>
 	/// Constructor for database settings
