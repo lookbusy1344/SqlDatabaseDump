@@ -1,4 +1,4 @@
-﻿namespace SqlDatabaseDump;
+namespace SqlDatabaseDump;
 
 /// <summary>
 /// This is a thread safe Int32 counter using Interlocked.Increment etc

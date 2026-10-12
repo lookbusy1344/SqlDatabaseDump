@@ -1,4 +1,4 @@
-﻿namespace SqlDatabaseDump;
+namespace SqlDatabaseDump;
 
 using Microsoft.SqlServer.Management.Smo;
 
@@ -32,7 +32,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 
 	public void AddTables(TableCollection tableCollection)
 	{
-		foreach (Table tab in tableCollection) {
+		foreach (var tab in tableCollection) {
 			cancellationToken.Token.ThrowIfCancellationRequested();
 
 			if (!tab.IsSystemObject) {
@@ -45,7 +45,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 
 	public void AddViews(ViewCollection viewCollection)
 	{
-		foreach (View v in viewCollection) {
+		foreach (var v in viewCollection) {
 			cancellationToken.Token.ThrowIfCancellationRequested();
 
 			if (!v.IsSystemObject) {
@@ -58,7 +58,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 
 	public void AddStoredProcedures(StoredProcedureCollection storedProcedures)
 	{
-		foreach (StoredProcedure p in storedProcedures) {
+		foreach (var p in storedProcedures) {
 			cancellationToken.Token.ThrowIfCancellationRequested();
 
 			if (!p.IsSystemObject) {
@@ -71,7 +71,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 
 	public void AddUserDefinedFunctions(UserDefinedFunctionCollection udfs)
 	{
-		foreach (UserDefinedFunction u in udfs) {
+		foreach (var u in udfs) {
 			cancellationToken.Token.ThrowIfCancellationRequested();
 
 			if (!u.IsSystemObject) {
@@ -84,7 +84,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 
 	public void AddRoles(DatabaseRoleCollection roles)
 	{
-		foreach (DatabaseRole r in roles) {
+		foreach (var r in roles) {
 			cancellationToken.Token.ThrowIfCancellationRequested();
 
 			if (!r.IsFixedRole) {
@@ -97,7 +97,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 
 	public void AddRules(RuleCollection rules)
 	{
-		foreach (Rule r in rules) {
+		foreach (var r in rules) {
 			cancellationToken.Token.ThrowIfCancellationRequested();
 
 			UpdateCounters();
@@ -108,7 +108,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 
 	public void AddDatabaseTriggers(DatabaseDdlTriggerCollection triggers)
 	{
-		foreach (DatabaseDdlTrigger t in triggers) {
+		foreach (var t in triggers) {
 			cancellationToken.Token.ThrowIfCancellationRequested();
 
 			if (!t.IsSystemObject) {
@@ -121,7 +121,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 
 	public void AddSchemas(SchemaCollection schemas)
 	{
-		foreach (Schema s in schemas) {
+		foreach (var s in schemas) {
 			cancellationToken.Token.ThrowIfCancellationRequested();
 
 			if (!s.IsSystemObject) {
@@ -135,7 +135,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 	public void AddUserDefinedDataTypes(UserDefinedDataTypeCollection types)
 	{
 		// UserDefinedDataTypes are SQL types, not .NET types (that are called UserDefinedTypes)
-		foreach (UserDefinedDataType t in types) {
+		foreach (var t in types) {
 			cancellationToken.Token.ThrowIfCancellationRequested();
 
 			UpdateCounters();
@@ -147,7 +147,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 	public void AddUserDefinedTypes(UserDefinedTypeCollection types)
 	{
 		// UserDefinedTypes are .NET types, not SQL types (that are called UserDefinedDataTypes)
-		foreach (UserDefinedType t in types) {
+		foreach (var t in types) {
 			cancellationToken.Token.ThrowIfCancellationRequested();
 
 			UpdateCounters();
@@ -158,7 +158,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 
 	public void AddSequences(SequenceCollection sequences)
 	{
-		foreach (Sequence s in sequences) {
+		foreach (var s in sequences) {
 			cancellationToken.Token.ThrowIfCancellationRequested();
 
 			UpdateCounters();
@@ -169,7 +169,7 @@ internal sealed class DbObjectList(CancellationTokenSource cancellationToken)
 
 	public void AddSynonyms(SynonymCollection syns)
 	{
-		foreach (Synonym s in syns) {
+		foreach (var s in syns) {
 			cancellationToken.Token.ThrowIfCancellationRequested();
 
 			UpdateCounters();

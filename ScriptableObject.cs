@@ -1,4 +1,4 @@
-﻿namespace SqlDatabaseDump;
+namespace SqlDatabaseDump;
 
 using System.Collections.Specialized;
 using Microsoft.SqlServer.Management.Smo;
